@@ -1,5 +1,38 @@
+import { Navigate, Route, Routes } from 'react-router'
+import { Layout } from './componentes/Layout.tsx'
+import { RutaProtegida } from './navegacion/RutaProtegida.tsx'
+import { rolesDe } from './navegacion/secciones.ts'
+import { InicioPage } from './paginas/InicioPage.tsx'
+import { LoginPage } from './paginas/LoginPage.tsx'
+import { UsuariosPage } from './paginas/UsuariosPage.tsx'
+import { SesionProvider } from './sesion/SesionProvider.tsx'
+
 function App() {
-  return <h1>Agencia360 ERP</h1>;
+  return (
+    <SesionProvider>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          element={
+            <RutaProtegida>
+              <Layout />
+            </RutaProtegida>
+          }
+        >
+          <Route index element={<InicioPage />} />
+          <Route
+            path="usuarios"
+            element={
+              <RutaProtegida roles={rolesDe('/usuarios')}>
+                <UsuariosPage />
+              </RutaProtegida>
+            }
+          />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </SesionProvider>
+  )
 }
 
-export default App;
+export default App

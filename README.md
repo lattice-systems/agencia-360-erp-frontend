@@ -27,7 +27,7 @@
 </div>
 
 > [!NOTE]
-> **Estado:** estructura inicial del proyecto. Todavía no hay funcionalidad del ERP implementada.
+> **Estado:** inicio de sesión, manejo de sesión, menú por rol y administración de usuarios (ERP-0.1).
 
 ---
 
@@ -94,10 +94,14 @@ Historias del **Product Backlog V2** que corresponden al ERP.
 | React + TypeScript             | Librería de UI y tipado estático   |
 | Vite                           | Servidor de desarrollo y build     |
 | ESLint                         | Análisis estático del código       |
+| React Router                   | Navegación y rutas protegidas por rol |
+| `fetch` (cliente propio)       | Consumo de la API (`src/api/`)     |
+| CSS propio                     | Estilos, sin librería de componentes |
 | Vitest + React Testing Library | Pruebas unitarias y de componentes |
+| MSW                            | Simulación de la API en las pruebas |
 | GitHub Actions                 | CI, CodeQL y Dependency Review     |
 
-Las librerías complementarias (navegación, formularios, consumo de API y componentes de UI) aún no están definidas. Ver [Pendientes por definir](#-pendientes-por-definir).
+La sesión se guarda en `sessionStorage`: se conserva al recargar la página y se borra al cerrar la pestaña o cuando vence el token.
 
 ---
 
@@ -121,11 +125,16 @@ cd agencia-360-erp-frontend
 # 2. Instalar dependencias
 npm install
 
-# 3. Levantar el servidor de desarrollo
+# 3. (Opcional) Configurar la URL de la API
+cp .env.example .env.local
+
+# 4. Levantar el servidor de desarrollo
 npm run dev
 ```
 
 La aplicación queda disponible en `http://localhost:5173`.
+
+**Para iniciar sesión** necesitas el [backend](https://github.com/lattice-systems/agencia-360-backend) corriendo en `http://localhost:8080` (o en la URL de `VITE_API_URL`) y un usuario. El primer Administrador se crea al levantar el backend con las variables `ADMIN_INICIAL_USUARIO` y `ADMIN_INICIAL_CONTRASENA` (ver el README del backend); después, desde la sección **Usuarios**, se dan de alta los demás.
 
 > [!TIP]
 > Si también tienes el CRM corriendo, Vite usa el siguiente puerto libre (`5174`) y lo indica en la terminal.
@@ -153,9 +162,13 @@ agencia-360-erp-frontend/
 ├── docs/                # Convenciones de ramas, commits y PR
 ├── public/              # Archivos estáticos servidos tal cual
 ├── src/
-│   ├── test/setup.ts    # Configuración común de las pruebas
-│   ├── App.tsx          # Componente raíz
-│   ├── App.test.tsx     # Prueba del componente raíz
+│   ├── api/             # Cliente HTTP y endpoints de la API
+│   ├── componentes/     # Componentes compartidos (layout con menú)
+│   ├── navegacion/      # Secciones del ERP por rol y rutas protegidas
+│   ├── paginas/         # Pantallas: login, inicio, usuarios
+│   ├── sesion/          # Sesión del usuario (contexto, almacenamiento, roles)
+│   ├── test/            # Configuración de pruebas, servidor MSW y utilidades
+│   ├── App.tsx          # Rutas de la aplicación
 │   ├── main.tsx         # Punto de entrada de la aplicación
 │   └── index.css        # Estilos globales
 ├── index.html           # HTML base
@@ -165,7 +178,7 @@ agencia-360-erp-frontend/
 └── package.json
 ```
 
-La organización de carpetas dentro de `src/` se definirá conforme avance el desarrollo.
+Cada módulo nuevo del ERP agrega su sección en `src/navegacion/secciones.ts` con los roles que pueden entrar, según la matriz de roles. Con eso aparece en el menú y su ruta queda protegida.
 
 ---
 
@@ -187,7 +200,7 @@ Lineamientos que afectan al frontend:
 
 - La API se documenta con OpenAPI; el cliente TypeScript del frontend se generará a partir de ese contrato.
 - Las reglas de negocio y los cálculos oficiales (saldos, existencias) los resuelve el backend.
-- El acceso se controla por roles: un rol por departamento, más supervisor y administrador.
+- Cada usuario tiene un solo rol. Al ERP entran Administrador, Facturación, Inventario, Servicio, Refacciones, Caja y Contabilidad.
 
 ---
 
@@ -196,7 +209,7 @@ Lineamientos que afectan al frontend:
 | Tipo                       | Herramienta                    | Estado            |
 | -------------------------- | ------------------------------ | ----------------- |
 | Unitarias y de componentes | Vitest + React Testing Library | ✅ Configurado    |
-| Simulación de la API       | MSW (Mock Service Worker)      | ⏳ Por configurar |
+| Simulación de la API       | MSW (Mock Service Worker)      | ✅ Configurado    |
 | End-to-end                 | Playwright                     | ⏳ Por configurar |
 
 Las pruebas corren en un DOM simulado con `jsdom` y usan los matchers de `@testing-library/jest-dom` (`toBeInTheDocument`, `toHaveTextContent`, etc.). Para simular lo que hace el usuario (clics, escribir en un campo) está disponible `@testing-library/user-event`.
@@ -253,9 +266,9 @@ El detalle de cada check está en [`docs/convenciones-commits.md`](docs/convenci
 
 | Tema                 | Qué falta                                                   |
 | -------------------- | ----------------------------------------------------------- |
-| Librerías            | Navegación, formularios, consumo de API y componentes de UI |
-| Estructura de `src/` | Organización de carpetas y convenciones de código           |
-| Pruebas              | Instalación y configuración de MSW y Playwright             |
+| Cliente de API       | Generarlo desde el contrato OpenAPI del backend             |
+| Formularios          | Librería de formularios, si hace falta                      |
+| Pruebas              | Instalación y configuración de Playwright                   |
 | Despliegue           | Servicio de Azure y ambientes                               |
 
 ---
