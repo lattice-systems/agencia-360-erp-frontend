@@ -46,6 +46,7 @@ La app móvil de clientes (**CareCar**) es un proyecto aparte que consume los se
 | React + TypeScript | Librería de UI y tipado estático |
 | Vite               | Servidor de desarrollo y build   |
 | ESLint             | Análisis estático del código     |
+| Vitest + React Testing Library | Pruebas unitarias y de componentes |
 
 Las librerías complementarias (navegación, formularios, consumo de API y componentes de UI) aún no están definidas. Ver [Pendientes por definir](#pendientes-por-definir).
 
@@ -94,6 +95,8 @@ La aplicación queda disponible en `http://localhost:5173`.
 | `npm run build`   | Revisa los tipos de TypeScript y genera el build de producción en `dist/` |
 | `npm run preview` | Sirve localmente el build de producción para revisarlo                    |
 | `npm run lint`    | Ejecuta ESLint sobre el proyecto                                          |
+| `npm test`        | Corre todas las pruebas con Vitest una vez                                |
+| `npm run test:watch` | Corre las pruebas en modo observador mientras desarrollas              |
 
 ---
 
@@ -104,14 +107,17 @@ Estructura actual, generada con la plantilla `react-ts` de Vite:
 ```
 agencia-360-erp-frontend/
 ├── public/              # Archivos estáticos servidos tal cual
+├── docs/                # Convenciones de ramas, commits y PR
 ├── src/
+│   ├── test/setup.ts    # Configuración común de las pruebas
 │   ├── App.tsx          # Componente raíz
+│   ├── App.test.tsx     # Prueba del componente raíz
 │   ├── main.tsx         # Punto de entrada de la aplicación
 │   └── index.css        # Estilos globales
 ├── index.html           # HTML base
 ├── eslint.config.js     # Configuración de ESLint
 ├── tsconfig*.json       # Configuración de TypeScript
-├── vite.config.ts       # Configuración de Vite
+├── vite.config.ts       # Configuración de Vite y Vitest
 └── package.json
 ```
 
@@ -167,13 +173,18 @@ Historias del **Product Backlog V2** que corresponden al ERP.
 
 ## Pruebas
 
-Herramientas definidas para el frontend (aún no configuradas en este repositorio):
+| Tipo                       | Herramienta                    | Estado        |
+| -------------------------- | ------------------------------ | ------------- |
+| Unitarias y de componentes | Vitest + React Testing Library | Configurado   |
+| Simulación de la API       | MSW (Mock Service Worker)      | Por configurar |
+| End-to-end                 | Playwright                     | Por configurar |
 
-| Tipo                       | Herramienta                    |
-| -------------------------- | ------------------------------ |
-| Unitarias y de componentes | Vitest + React Testing Library |
-| Simulación de la API       | MSW (Mock Service Worker)      |
-| End-to-end                 | Playwright                     |
+Las pruebas corren en un DOM simulado con `jsdom` y usan los matchers de `@testing-library/jest-dom` (`toBeInTheDocument`, `toHaveTextContent`, etc.). Cada prueba vive junto al componente que prueba, con el sufijo `.test.tsx`:
+
+```bash
+npm test             # corre todas las pruebas una vez
+npm run test:watch   # vuelve a correrlas al guardar
+```
 
 ---
 
@@ -195,11 +206,10 @@ Herramientas definidas para el frontend (aún no configuradas en este repositori
 
 | Tema                 | Qué falta                                                                       |
 | -------------------- | ------------------------------------------------------------------------------- |
-| Estrategia de ramas  | Ramas, formato de commits y revisión de pull requests (TEC-2 pide documentarla) |
 | CI                   | Workflow de GitHub Actions con build y pruebas en cada push (TEC-2)             |
 | Librerías            | Navegación, formularios, consumo de API y componentes de UI                     |
 | Estructura de `src/` | Organización de carpetas y convenciones de código                               |
-| Pruebas              | Instalación y configuración de Vitest, React Testing Library, MSW y Playwright  |
+| Pruebas              | Instalación y configuración de MSW y Playwright                                 |
 | Despliegue           | Servicio de Azure y ambientes                                                   |
 | Repositorio del CRM  | Si el CRM web vive en este repositorio o en uno propio                          |
 
@@ -208,4 +218,5 @@ Herramientas definidas para el frontend (aún no configuradas en este repositori
 ## Documentación relacionada
 
 - **Wiki del proyecto (Azure DevOps):** [Agente360 Wiki](https://dev.azure.com/latticesystems/Agente360/_wiki/wikis/Agente360.wiki), sección _Arquitectura y Tecnologías_.
+- **Convenciones de ramas, commits y PR:** [`docs/convenciones-commits.md`](docs/convenciones-commits.md)
 - **Backend:** [`agencia-360-backend`](https://github.com/lattice-systems/agencia-360-backend)
