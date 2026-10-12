@@ -1,0 +1,45 @@
+name: CI
+
+# Corre en cada push a cualquier rama (main está protegida, así que el trabajo
+# diario vive en ramas de feature) y en cada PR hacia main.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+# Si llegan varios push seguidos a la misma rama o PR, cancela la corrida
+# anterior: no tiene sentido esperar un build viejo si ya hay uno más nuevo.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-build-test:
+    name: Lint, build y pruebas (Node 22)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v7
+
+      - name: Configurar Node 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Instalar dependencias (según package-lock.json)
+        run: npm ci
+
+      - name: Lint (ESLint)
+        run: npm run lint
+
+      - name: Build (TypeScript + Vite)
+        run: npm run build
+
+      - name: Pruebas (Vitest + React Testing Library)
+        run: npm test
