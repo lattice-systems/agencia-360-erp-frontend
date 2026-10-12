@@ -82,7 +82,20 @@ Los nombres exactos de los checks requeridos se configuran en GitHub después de
 
 ### ERP frontend: CI en cada push
 
-El workflow `.github/workflows/ci.yml` (check **`CI / Lint, build y pruebas (Node 22)`**) corre en cada push a cualquier rama y en cada PR hacia `main`. Instala las dependencias con `npm ci` y ejecuta ESLint, el build (TypeScript + Vite) y las pruebas con Vitest y React Testing Library.
+El workflow `.github/workflows/ci.yml` corre en cada push a cualquier rama y en cada PR hacia `main`. Tiene un job por revisión, que corren en paralelo, para que en el PR se vea directamente cuál falló:
+
+| Check | Qué revisa |
+| --- | --- |
+| `CI / Lint (ESLint)` | Reglas de ESLint |
+| `CI / Build (TypeScript + Vite)` | Tipos de TypeScript y build de producción |
+| `CI / Pruebas (Vitest + React Testing Library)` | Pruebas unitarias y de componentes |
+
+Además hay dos revisiones de seguridad:
+
+| Check | Cuándo corre | Qué revisa |
+| --- | --- | --- |
+| `CodeQL / Análisis de CodeQL (TypeScript)` | Push y PR a `main`, y todos los lunes | Vulnerabilidades y código inseguro (XSS, inyecciones, etc.). Los hallazgos aparecen en **Security → Code scanning** |
+| `Dependency Review / Revisión de dependencias nuevas/cambiadas` | Solo en PR | Bloquea el PR si agrega una dependencia con vulnerabilidad alta o crítica, y deja un comentario con el resumen |
 
 Antes de hacer push, corre lo mismo en local:
 
