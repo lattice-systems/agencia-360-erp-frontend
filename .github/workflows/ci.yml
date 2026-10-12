@@ -18,9 +18,11 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Cada revisión es un job aparte (corren en paralelo): así en el PR aparece un
+# check por cada una y se ve de inmediato si falló el lint, el build o las pruebas.
 jobs:
-  lint-build-test:
-    name: Lint, build y pruebas (Node 22)
+  lint:
+    name: Lint (ESLint)
     runs-on: ubuntu-latest
     steps:
       - name: Descargar el código
@@ -35,11 +37,43 @@ jobs:
       - name: Instalar dependencias (según package-lock.json)
         run: npm ci
 
-      - name: Lint (ESLint)
+      - name: Revisar el código con ESLint
         run: npm run lint
 
-      - name: Build (TypeScript + Vite)
+  build:
+    name: Build (TypeScript + Vite)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v7
+
+      - name: Configurar Node 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Instalar dependencias (según package-lock.json)
+        run: npm ci
+
+      - name: Revisar tipos y generar el build
         run: npm run build
 
-      - name: Pruebas (Vitest + React Testing Library)
+  pruebas:
+    name: Pruebas (Vitest + React Testing Library)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v7
+
+      - name: Configurar Node 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Instalar dependencias (según package-lock.json)
+        run: npm ci
+
+      - name: Correr las pruebas
         run: npm test
