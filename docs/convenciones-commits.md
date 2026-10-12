@@ -80,9 +80,11 @@ Antes de pedir revisión, comprueba que el PR tiene un alcance claro, que CI ter
 
 Los nombres exactos de los checks requeridos se configuran en GitHub después de que los workflows hayan corrido al menos una vez.
 
-### ERP frontend: checks antes de hacer push
+### ERP frontend: CI en cada push
 
-Antes de hacer push, corre en local los mismos checks que se exigirán en CI:
+El workflow `.github/workflows/ci.yml` (check **`CI / Lint, build y pruebas (Node 22)`**) corre en cada push a cualquier rama y en cada PR hacia `main`. Instala las dependencias con `npm ci` y ejecuta ESLint, el build (TypeScript + Vite) y las pruebas con Vitest y React Testing Library.
+
+Antes de hacer push, corre lo mismo en local:
 
 ```bash
 npm run lint    # ESLint

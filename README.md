@@ -41,11 +41,11 @@ La app móvil de clientes (**CareCar**) es un proyecto aparte que consume los se
 
 ## Stack tecnológico
 
-| Tecnología         | Uso                              |
-| ------------------ | -------------------------------- |
-| React + TypeScript | Librería de UI y tipado estático |
-| Vite               | Servidor de desarrollo y build   |
-| ESLint             | Análisis estático del código     |
+| Tecnología                     | Uso                                |
+| ------------------------------ | ---------------------------------- |
+| React + TypeScript             | Librería de UI y tipado estático   |
+| Vite                           | Servidor de desarrollo y build     |
+| ESLint                         | Análisis estático del código       |
 | Vitest + React Testing Library | Pruebas unitarias y de componentes |
 
 Las librerías complementarias (navegación, formularios, consumo de API y componentes de UI) aún no están definidas. Ver [Pendientes por definir](#pendientes-por-definir).
@@ -89,14 +89,14 @@ La aplicación queda disponible en `http://localhost:5173`.
 
 ## Scripts disponibles
 
-| Comando           | Descripción                                                               |
-| ----------------- | ------------------------------------------------------------------------- |
-| `npm run dev`     | Inicia el servidor de desarrollo con recarga automática                   |
-| `npm run build`   | Revisa los tipos de TypeScript y genera el build de producción en `dist/` |
-| `npm run preview` | Sirve localmente el build de producción para revisarlo                    |
-| `npm run lint`    | Ejecuta ESLint sobre el proyecto                                          |
-| `npm test`        | Corre todas las pruebas con Vitest una vez                                |
-| `npm run test:watch` | Corre las pruebas en modo observador mientras desarrollas              |
+| Comando              | Descripción                                                               |
+| -------------------- | ------------------------------------------------------------------------- |
+| `npm run dev`        | Inicia el servidor de desarrollo con recarga automática                   |
+| `npm run build`      | Revisa los tipos de TypeScript y genera el build de producción en `dist/` |
+| `npm run preview`    | Sirve localmente el build de producción para revisarlo                    |
+| `npm run lint`       | Ejecuta ESLint sobre el proyecto                                          |
+| `npm test`           | Corre todas las pruebas con Vitest una vez                                |
+| `npm run test:watch` | Corre las pruebas en modo observador mientras desarrollas                 |
 
 ---
 
@@ -107,6 +107,7 @@ Estructura actual, generada con la plantilla `react-ts` de Vite:
 ```
 agencia-360-erp-frontend/
 ├── public/              # Archivos estáticos servidos tal cual
+├── .github/workflows/    # CI: lint, build y pruebas en cada push
 ├── docs/                # Convenciones de ramas, commits y PR
 ├── src/
 │   ├── test/setup.ts    # Configuración común de las pruebas
@@ -173,9 +174,9 @@ Historias del **Product Backlog V2** que corresponden al ERP.
 
 ## Pruebas
 
-| Tipo                       | Herramienta                    | Estado        |
-| -------------------------- | ------------------------------ | ------------- |
-| Unitarias y de componentes | Vitest + React Testing Library | Configurado   |
+| Tipo                       | Herramienta                    | Estado         |
+| -------------------------- | ------------------------------ | -------------- |
+| Unitarias y de componentes | Vitest + React Testing Library | Configurado    |
 | Simulación de la API       | MSW (Mock Service Worker)      | Por configurar |
 | End-to-end                 | Playwright                     | Por configurar |
 
@@ -192,7 +193,7 @@ npm run test:watch   # vuelve a correrlas al guardar
 
 - Metodología **Scrumban + XP**, en parejas de desarrollador + Claude.
 - Límite WIP: 1 historia activa por desarrollador.
-- Tablero, iteraciones y wiki en **Azure DevOps**; código en **GitHub**; CI/CD con **GitHub Actions**.
+- Tablero, iteraciones y wiki en **Azure DevOps**; código en **GitHub**; CI/CD con **GitHub Actions** (`.github/workflows/ci.yml`: lint, build y pruebas en cada push).
 - Todo cambio se revisa antes de integrarse a la rama principal.
 
 **Propuesta del backlog V2 (pendiente de aprobación):**
@@ -204,14 +205,13 @@ npm run test:watch   # vuelve a correrlas al guardar
 
 ## Pendientes por definir
 
-| Tema                 | Qué falta                                                                       |
-| -------------------- | ------------------------------------------------------------------------------- |
-| CI                   | Workflow de GitHub Actions con build y pruebas en cada push (TEC-2)             |
-| Librerías            | Navegación, formularios, consumo de API y componentes de UI                     |
-| Estructura de `src/` | Organización de carpetas y convenciones de código                               |
-| Pruebas              | Instalación y configuración de MSW y Playwright                                 |
-| Despliegue           | Servicio de Azure y ambientes                                                   |
-| Repositorio del CRM  | Si el CRM web vive en este repositorio o en uno propio                          |
+| Tema                 | Qué falta                                                   |
+| -------------------- | ----------------------------------------------------------- |
+| Librerías            | Navegación, formularios, consumo de API y componentes de UI |
+| Estructura de `src/` | Organización de carpetas y convenciones de código           |
+| Pruebas              | Instalación y configuración de MSW y Playwright             |
+| Despliegue           | Servicio de Azure y ambientes                               |
+| Repositorio del CRM  | Si el CRM web vive en este repositorio o en uno propio      |
 
 ---
 
