@@ -107,7 +107,7 @@ Estructura actual, generada con la plantilla `react-ts` de Vite:
 ```
 agencia-360-erp-frontend/
 ├── public/              # Archivos estáticos servidos tal cual
-├── .github/workflows/    # CI: lint, build y pruebas en cada push
+├── .github/workflows/    # CI (lint, build, pruebas), CodeQL y Dependency Review
 ├── docs/                # Convenciones de ramas, commits y PR
 ├── src/
 │   ├── test/setup.ts    # Configuración común de las pruebas
@@ -193,7 +193,7 @@ npm run test:watch   # vuelve a correrlas al guardar
 
 - Metodología **Scrumban + XP**, en parejas de desarrollador + Claude.
 - Límite WIP: 1 historia activa por desarrollador.
-- Tablero, iteraciones y wiki en **Azure DevOps**; código en **GitHub**; CI/CD con **GitHub Actions** (`.github/workflows/ci.yml`: lint, build y pruebas en cada push).
+- Tablero, iteraciones y wiki en **Azure DevOps**; código en **GitHub**; CI/CD con **GitHub Actions** (lint, build y pruebas en cada push, más CodeQL y Dependency Review; ver [`docs/convenciones-commits.md`](docs/convenciones-commits.md)).
 - Todo cambio se revisa antes de integrarse a la rama principal.
 
 **Propuesta del backlog V2 (pendiente de aprobación):**
