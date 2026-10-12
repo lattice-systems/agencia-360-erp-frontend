@@ -1,13 +1,18 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import App from './App.tsx'
+import { renderApp } from './test/utilidades.ts'
 
 describe('App', () => {
-  it('muestra el título del ERP', () => {
-    render(<App />)
+  it('muestra el inicio de sesión del ERP a quien no ha entrado', () => {
+    renderApp('/')
 
-    expect(
-      screen.getByRole('heading', { name: 'Agencia360 ERP' }),
-    ).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Agencia360 ERP' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Iniciar sesión' })).toBeInTheDocument()
+  })
+
+  it('redirige una ruta desconocida al inicio', () => {
+    renderApp('/no-existe')
+
+    expect(screen.getByRole('button', { name: 'Iniciar sesión' })).toBeInTheDocument()
   })
 })
