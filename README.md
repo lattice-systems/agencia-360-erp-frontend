@@ -27,7 +27,7 @@
 </div>
 
 > [!NOTE]
-> **Estado:** inicio de sesión, manejo de sesión, menú por rol y administración de usuarios (ERP-0.1).
+> **Estado:** inicio de sesión, menú por rol y administración de usuarios (ERP-0.1); alta, consulta y edición de vehículos y refacciones, y registro de recepciones (ERP-2.0).
 
 ---
 
@@ -169,10 +169,11 @@ agencia-360-erp-frontend/
 ├── docs/                # Convenciones de ramas, commits y PR
 ├── public/              # Logos de Agencia360 y favicon
 ├── src/
-│   ├── api/             # Cliente HTTP y endpoints de la API
+│   ├── api/             # Cliente HTTP, endpoints de acceso y useConsulta
 │   ├── components/ui/   # Componentes de shadcn/ui (generados con la CLI)
 │   ├── componentes/     # Componentes propios (layout con menú lateral)
 │   ├── hooks/           # Hooks compartidos
+│   ├── inventario/      # ERP-2.0: vehículos, refacciones y recepciones
 │   ├── lib/             # Utilidades (cn)
 │   ├── navegacion/      # Secciones del ERP por rol y rutas protegidas
 │   ├── paginas/         # Pantallas: login, inicio, usuarios
@@ -213,6 +214,15 @@ Lineamientos que afectan al frontend:
 - La API se documenta con OpenAPI; el cliente TypeScript del frontend se generará a partir de ese contrato.
 - Las reglas de negocio y los cálculos oficiales (saldos, existencias) los resuelve el backend.
 - Cada usuario tiene un solo rol. Al ERP entran Administrador, Facturación, Inventario, Servicio, Refacciones, Caja y Contabilidad.
+- Inventario (ERP-2.0), según las decisiones del PO del 13 de octubre:
+
+  | Sección | Inventario | Administrador | Refacciones |
+  | --- | --- | --- | --- |
+  | Vehículos | Alta, consulta y edición | Solo consulta | — |
+  | Refacciones | Alta, consulta y edición | Solo consulta | Solo consulta |
+  | Recepciones | Registro | Historial (desde Refacciones) | Historial (desde Refacciones) |
+
+  Las unidades y refacciones se editan pero no se eliminan. Una refacción nueva entra con existencia en cero y crece con las recepciones, que guardan la fecha de llegada, la de registro, el proveedor, notas y el responsable. Cuando una refacción llega a su existencia mínima, la pantalla de Refacciones muestra el aviso para resurtir.
 
 ---
 
