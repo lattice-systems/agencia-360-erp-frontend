@@ -96,10 +96,17 @@ Historias del **Product Backlog V2** que corresponden al ERP.
 | ESLint                         | Análisis estático del código       |
 | React Router                   | Navegación y rutas protegidas por rol |
 | `fetch` (cliente propio)       | Consumo de la API (`src/api/`)     |
-| CSS propio                     | Estilos, sin librería de componentes |
+| shadcn/ui (Radix) + Tailwind CSS 4 | Componentes y estilos, con los tokens de la guía de estilos |
+| Lucide (`lucide-react`)        | Íconos                             |
+| react-hook-form + zod          | Formularios y validación           |
+| Inter y JetBrains Mono         | Fuentes locales (`@fontsource-variable`), sin Google Fonts |
 | Vitest + React Testing Library | Pruebas unitarias y de componentes |
 | MSW                            | Simulación de la API en las pruebas |
 | GitHub Actions                 | CI, CodeQL y Dependency Review     |
+
+La interfaz sigue la **guía de estilos de Agencia360** (`estilos.pdf`): Azul Agencia `#1D3557` como color principal, turquesa solo como acento, menú lateral izquierdo y componentes de shadcn/ui. Los tokens de color, tipografía y radios están en `src/index.css`. Los componentes se agregan con `npx shadcn@latest add <componente>`; la CLI no es dependencia de la app.
+
+El login y la administración de usuarios todavía usan el CSS anterior (`src/estilos-anteriores.css`, aislado en `.estilo-anterior`). Se migran a shadcn/ui en sus propios PR y después se borra ese archivo.
 
 La sesión se guarda en `sessionStorage`: se conserva al recargar la página y se borra al cerrar la pestaña o cuando vence el token.
 
@@ -160,17 +167,22 @@ La aplicación queda disponible en `http://localhost:5173`.
 agencia-360-erp-frontend/
 ├── .github/workflows/   # CI (lint, build, pruebas), CodeQL y Dependency Review
 ├── docs/                # Convenciones de ramas, commits y PR
-├── public/              # Archivos estáticos servidos tal cual
+├── public/              # Logos de Agencia360 y favicon
 ├── src/
 │   ├── api/             # Cliente HTTP y endpoints de la API
-│   ├── componentes/     # Componentes compartidos (layout con menú)
+│   ├── components/ui/   # Componentes de shadcn/ui (generados con la CLI)
+│   ├── componentes/     # Componentes propios (layout con menú lateral)
+│   ├── hooks/           # Hooks compartidos
+│   ├── lib/             # Utilidades (cn)
 │   ├── navegacion/      # Secciones del ERP por rol y rutas protegidas
 │   ├── paginas/         # Pantallas: login, inicio, usuarios
 │   ├── sesion/          # Sesión del usuario (contexto, almacenamiento, roles)
 │   ├── test/            # Configuración de pruebas, servidor MSW y utilidades
 │   ├── App.tsx          # Rutas de la aplicación
 │   ├── main.tsx         # Punto de entrada de la aplicación
-│   └── index.css        # Estilos globales
+│   ├── index.css        # Tema: tokens de la guía de estilos y Tailwind
+│   └── estilos-anteriores.css  # CSS del login y usuarios, hasta migrarlos
+├── components.json      # Configuración de shadcn/ui
 ├── index.html           # HTML base
 ├── eslint.config.js     # Configuración de ESLint
 ├── tsconfig*.json       # Configuración de TypeScript
@@ -178,7 +190,7 @@ agencia-360-erp-frontend/
 └── package.json
 ```
 
-Cada módulo nuevo del ERP agrega su sección en `src/navegacion/secciones.ts` con los roles que pueden entrar, según la matriz de roles. Con eso aparece en el menú y su ruta queda protegida.
+Cada módulo nuevo del ERP agrega su sección en `src/navegacion/secciones.ts` con los roles que pueden entrar, según la matriz de roles. Con eso aparece en el menú lateral, en su grupo y con su ícono de Lucide, y su ruta queda protegida.
 
 ---
 
@@ -267,7 +279,8 @@ El detalle de cada check está en [`docs/convenciones-commits.md`](docs/convenci
 | Tema                 | Qué falta                                                   |
 | -------------------- | ----------------------------------------------------------- |
 | Cliente de API       | Generarlo desde el contrato OpenAPI del backend             |
-| Formularios          | Librería de formularios, si hace falta                      |
+| Pantallas anteriores | Migrar el login y la administración de usuarios a shadcn/ui |
+| Logos                | Reemplazar los PNG provisionales por los SVG definitivos    |
 | Pruebas              | Instalación y configuración de Playwright                   |
 | Despliegue           | Servicio de Azure y ambientes                               |
 
