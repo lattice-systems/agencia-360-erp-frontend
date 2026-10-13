@@ -43,7 +43,7 @@ export function LoginPage() {
   }
 
   return (
-    <main className="login">
+    <main className="login estilo-anterior">
       <form className="tarjeta" onSubmit={enviar} noValidate>
         <h1>Agencia360 ERP</h1>
         <p className="ayuda">Inicia sesión con la cuenta que te dio el administrador.</p>

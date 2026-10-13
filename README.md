@@ -27,7 +27,7 @@
 </div>
 
 > [!NOTE]
-> **Estado:** inicio de sesión, manejo de sesión, menú por rol y administración de usuarios (ERP-0.1).
+> **Estado:** inicio de sesión, menú por rol y administración de usuarios (ERP-0.1); alta, consulta y edición de vehículos y refacciones, y registro de recepciones (ERP-2.0).
 
 ---
 
@@ -96,10 +96,17 @@ Historias del **Product Backlog V2** que corresponden al ERP.
 | ESLint                         | Análisis estático del código       |
 | React Router                   | Navegación y rutas protegidas por rol |
 | `fetch` (cliente propio)       | Consumo de la API (`src/api/`)     |
-| CSS propio                     | Estilos, sin librería de componentes |
+| shadcn/ui (Radix) + Tailwind CSS 4 | Componentes y estilos, con los tokens de la guía de estilos |
+| Lucide (`lucide-react`)        | Íconos                             |
+| react-hook-form + zod          | Formularios y validación           |
+| Inter y JetBrains Mono         | Fuentes locales (`@fontsource-variable`), sin Google Fonts |
 | Vitest + React Testing Library | Pruebas unitarias y de componentes |
 | MSW                            | Simulación de la API en las pruebas |
 | GitHub Actions                 | CI, CodeQL y Dependency Review     |
+
+La interfaz sigue la **guía de estilos de Agencia360** (`estilos.pdf`): Azul Agencia `#1D3557` como color principal, turquesa solo como acento, menú lateral izquierdo y componentes de shadcn/ui. Los tokens de color, tipografía y radios están en `src/index.css`. Los componentes se agregan con `npx shadcn@latest add <componente>`; la CLI no es dependencia de la app.
+
+El login y la administración de usuarios todavía usan el CSS anterior (`src/estilos-anteriores.css`, aislado en `.estilo-anterior`). Se migran a shadcn/ui en sus propios PR y después se borra ese archivo.
 
 La sesión se guarda en `sessionStorage`: se conserva al recargar la página y se borra al cerrar la pestaña o cuando vence el token.
 
@@ -134,10 +141,45 @@ npm run dev
 
 La aplicación queda disponible en `http://localhost:5173`.
 
-**Para iniciar sesión** necesitas el [backend](https://github.com/lattice-systems/agencia-360-backend) corriendo en `http://localhost:8080` (o en la URL de `VITE_API_URL`) y un usuario. El primer Administrador se crea al levantar el backend con las variables `ADMIN_INICIAL_USUARIO` y `ADMIN_INICIAL_CONTRASENA` (ver el README del backend); después, desde la sección **Usuarios**, se dan de alta los demás.
+**Para iniciar sesión** necesitas el [backend](https://github.com/lattice-systems/agencia-360-backend) corriendo en `http://localhost:8080` (o en la URL de `VITE_API_URL`) y un usuario.
+
+### 👥 Usuarios de ejemplo
+
+El backend trae un script que crea un usuario por rol. Desde la carpeta del backend:
+
+```bash
+# 1. Levantar la API con el Administrador y el Gerente de marketing iniciales
+ADMIN_INICIAL_USUARIO=admin ADMIN_INICIAL_CONTRASENA=Admin12345 \
+GERENTE_INICIAL_USUARIO=gerente GERENTE_INICIAL_CONTRASENA=Gerente12345 \
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+
+# 2. En otra terminal, crear los demás usuarios
+./scripts/usuarios-de-ejemplo.sh
+```
+
+> [!WARNING]
+> **Solo para desarrollo local.** Estas contraseñas son públicas: nunca las uses en un ambiente real.
+
+Usuarios que entran al ERP y lo que ve cada uno en el menú lateral:
+
+| Usuario | Contraseña | Rol | Qué puede probar |
+| --- | --- | --- | --- |
+| `admin` | `Admin12345` | Administrador | **Usuarios**; consulta de **Vehículos** y **Refacciones** (sin dar de alta ni editar) |
+| `inventario1` | `Inventario123` | Inventario | **Vehículos**, **Refacciones** y **Recepciones**: alta, edición y registro de entradas |
+| `refacciones1` | `Refacciones123` | Refacciones | **Refacciones**: consulta del stock, aviso de las que hay que resurtir e historial de recepciones |
+| `facturacion1` | `Facturacion123` | Facturación | Inicio sin módulos (sus historias llegan después) |
+| `servicio1` | `Servicio123` | Servicio | Inicio sin módulos |
+| `caja1` | `Caja12345` | Caja | Inicio sin módulos |
+| `contabilidad1` | `Contabilidad123` | Contabilidad | Inicio sin módulos |
+
+`gerente`, `vendedor1` y `vendedor2` son del CRM: su rol no entra al ERP, así que el login responde «Tu rol no tiene acceso al ERP». La lista completa está en el README del backend (sección 5.6).
+
+Para probar el inventario de punta a punta:
+1. Entra con `inventario1`, agrega una refacción y regístrale una recepción.
+2. Entra con `refacciones1` y revisa el aviso de "por resurtir" y el historial con sus dos fechas.
 
 > [!TIP]
-> Si también tienes el CRM corriendo, Vite usa el siguiente puerto libre (`5174`) y lo indica en la terminal.
+> Si también tienes el CRM corriendo, Vite usa el siguiente puerto libre (`5174`) y lo indica en la terminal. En ese caso, levanta el backend con `CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174`; si no, el login funciona pero las demás pantallas dicen "No se pudo conectar con el servidor".
 
 ---
 
@@ -160,17 +202,23 @@ La aplicación queda disponible en `http://localhost:5173`.
 agencia-360-erp-frontend/
 ├── .github/workflows/   # CI (lint, build, pruebas), CodeQL y Dependency Review
 ├── docs/                # Convenciones de ramas, commits y PR
-├── public/              # Archivos estáticos servidos tal cual
+├── public/              # Logos de Agencia360 y favicon
 ├── src/
-│   ├── api/             # Cliente HTTP y endpoints de la API
-│   ├── componentes/     # Componentes compartidos (layout con menú)
+│   ├── api/             # Cliente HTTP, endpoints de acceso y useConsulta
+│   ├── components/ui/   # Componentes de shadcn/ui (generados con la CLI)
+│   ├── componentes/     # Componentes propios (layout con menú lateral)
+│   ├── hooks/           # Hooks compartidos
+│   ├── inventario/      # ERP-2.0: vehículos, refacciones y recepciones
+│   ├── lib/             # Utilidades (cn)
 │   ├── navegacion/      # Secciones del ERP por rol y rutas protegidas
 │   ├── paginas/         # Pantallas: login, inicio, usuarios
 │   ├── sesion/          # Sesión del usuario (contexto, almacenamiento, roles)
 │   ├── test/            # Configuración de pruebas, servidor MSW y utilidades
 │   ├── App.tsx          # Rutas de la aplicación
 │   ├── main.tsx         # Punto de entrada de la aplicación
-│   └── index.css        # Estilos globales
+│   ├── index.css        # Tema: tokens de la guía de estilos y Tailwind
+│   └── estilos-anteriores.css  # CSS del login y usuarios, hasta migrarlos
+├── components.json      # Configuración de shadcn/ui
 ├── index.html           # HTML base
 ├── eslint.config.js     # Configuración de ESLint
 ├── tsconfig*.json       # Configuración de TypeScript
@@ -178,7 +226,7 @@ agencia-360-erp-frontend/
 └── package.json
 ```
 
-Cada módulo nuevo del ERP agrega su sección en `src/navegacion/secciones.ts` con los roles que pueden entrar, según la matriz de roles. Con eso aparece en el menú y su ruta queda protegida.
+Cada módulo nuevo del ERP agrega su sección en `src/navegacion/secciones.ts` con los roles que pueden entrar, según la matriz de roles. Con eso aparece en el menú lateral, en su grupo y con su ícono de Lucide, y su ruta queda protegida.
 
 ---
 
@@ -201,6 +249,15 @@ Lineamientos que afectan al frontend:
 - La API se documenta con OpenAPI; el cliente TypeScript del frontend se generará a partir de ese contrato.
 - Las reglas de negocio y los cálculos oficiales (saldos, existencias) los resuelve el backend.
 - Cada usuario tiene un solo rol. Al ERP entran Administrador, Facturación, Inventario, Servicio, Refacciones, Caja y Contabilidad.
+- Inventario (ERP-2.0), según las decisiones del PO del 13 de octubre:
+
+  | Sección | Inventario | Administrador | Refacciones |
+  | --- | --- | --- | --- |
+  | Vehículos | Alta, consulta y edición | Solo consulta | — |
+  | Refacciones | Alta, consulta y edición | Solo consulta | Solo consulta |
+  | Recepciones | Registro | Historial (desde Refacciones) | Historial (desde Refacciones) |
+
+  Las unidades y refacciones se editan pero no se eliminan. Una refacción nueva entra con existencia en cero y crece con las recepciones, que guardan la fecha de llegada, la de registro, el proveedor, notas y el responsable. Cuando una refacción llega a su existencia mínima, la pantalla de Refacciones muestra el aviso para resurtir.
 
 ---
 
@@ -219,6 +276,22 @@ Cada prueba vive junto al componente que prueba, con el sufijo `.test.tsx`:
 ```bash
 npm test             # corre todas las pruebas una vez
 npm run test:watch   # vuelve a correrlas al guardar
+```
+
+Cómo están escritas:
+- Buscan por rol y por texto, como lo haría una persona (`getByRole('button', { name: 'Guardar vehículo' })`), nunca por clases.
+- Cada una define las respuestas de la API con MSW (`servidor.use(...)` en `src/test/servidor.ts`). Si una prueba llama a una ruta sin respuesta, falla.
+- `conSesion('INVENTARIO')` deja una sesión guardada y `renderApp('/ruta')` renderiza la aplicación completa (`src/test/utilidades.ts`).
+- Usan `userEvent.setup({ delay: null })`, y el límite por prueba es de 15 s, para que los formularios no fallen por tiempo cuando la suite corre en paralelo en el CI.
+- La vista de celular se prueba simulando `matchMedia` (`src/inventario/Celular.test.tsx`).
+
+Las pruebas no pasan por el backend real, así que no detectan problemas de red como CORS. Antes de dar una pantalla por terminada, pruébala también contra el backend con los usuarios de ejemplo.
+
+Para ver la cobertura sin agregar dependencias al proyecto:
+
+```bash
+npm install --no-save @vitest/coverage-v8@5.0.3
+npx vitest run --coverage --coverage.provider=v8 --coverage.include='src/inventario/**'
 ```
 
 ---
@@ -267,7 +340,8 @@ El detalle de cada check está en [`docs/convenciones-commits.md`](docs/convenci
 | Tema                 | Qué falta                                                   |
 | -------------------- | ----------------------------------------------------------- |
 | Cliente de API       | Generarlo desde el contrato OpenAPI del backend             |
-| Formularios          | Librería de formularios, si hace falta                      |
+| Pantallas anteriores | Migrar el login y la administración de usuarios a shadcn/ui |
+| Logos                | Reemplazar los PNG provisionales por los SVG definitivos    |
 | Pruebas              | Instalación y configuración de Playwright                   |
 | Despliegue           | Servicio de Azure y ambientes                               |
 

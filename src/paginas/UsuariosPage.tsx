@@ -123,7 +123,7 @@ export function UsuariosPage() {
   }
 
   return (
-    <section className="pagina">
+    <section className="pagina estilo-anterior">
       <h1>Usuarios</h1>
       {error && (
         <p role="alert" className="error">

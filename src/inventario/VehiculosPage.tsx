@@ -1,0 +1,296 @@
+import { Ban, Car, CircleCheck, Ellipsis, Lock, Plus, Search } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { formatearMoneda } from '@/lib/formato'
+import { deLaPagina } from '@/lib/paginacion'
+import { useConsulta } from '../api/useConsulta.ts'
+import { ChipEstado } from '../componentes/ChipEstado.tsx'
+import { EncabezadoPagina } from '../componentes/EncabezadoPagina.tsx'
+import { EstadoVacio } from '../componentes/EstadoVacio.tsx'
+import { Paginacion } from '../componentes/Paginacion.tsx'
+import { TablaCargando } from '../componentes/TablaCargando.tsx'
+import { TarjetaDato } from '../componentes/TarjetaDato.tsx'
+import { useSesion } from '../sesion/useSesion.ts'
+import { ESTATUS_VEHICULO, listarVehiculos, type EstatusVehiculo, type Vehiculo } from './api.ts'
+import { NOMBRE_ESTATUS, TONO_ESTATUS } from './estados.ts'
+
+const POR_PAGINA = 10
+const TODOS = 'TODOS'
+
+/** Inventario de vehículos (ERP-2.0): consulta para Inventario y Administrador. */
+export function VehiculosPage() {
+  const { sesion } = useSesion()
+  const puedeOperar = sesion?.rol === 'INVENTARIO'
+  const { datos, cargando, error, recargar } = useConsulta(listarVehiculos)
+  const [busqueda, setBusqueda] = useState('')
+  const [estatus, setEstatus] = useState<EstatusVehiculo | typeof TODOS>(TODOS)
+  const [pagina, setPagina] = useState(1)
+
+  const vehiculos = useMemo(() => datos ?? [], [datos])
+  const filtrados = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase()
+    return vehiculos.filter(
+      (v) =>
+        (estatus === TODOS || v.estatus === estatus) &&
+        (!texto ||
+          v.vin.toLowerCase().includes(texto) ||
+          v.modelo.toLowerCase().includes(texto) ||
+          v.version.toLowerCase().includes(texto)),
+    )
+  }, [vehiculos, busqueda, estatus])
+
+  const cuenta = (...lista: EstatusVehiculo[]) =>
+    vehiculos.filter((v) => lista.includes(v.estatus)).length
+
+  const agregar = puedeOperar ? (
+    <Button asChild>
+      <Link to="/vehiculos/nuevo">
+        <Plus aria-hidden="true" />
+        Agregar vehículo
+      </Link>
+    </Button>
+  ) : undefined
+
+  return (
+    <section className="flex flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Vehículos"
+        descripcion={
+          puedeOperar
+            ? 'Consulta el inventario y registra nuevas unidades.'
+            : 'Consulta las unidades del inventario.'
+        }
+        accion={agregar}
+      />
+
+      {error ? (
+        <Alert variant="destructive">
+          <AlertTitle>No se pudieron cargar los vehículos</AlertTitle>
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+            {error}
+            <Button variant="outline" onClick={recargar}>
+              Reintentar
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : cargando ? (
+        <TablaCargando />
+      ) : vehiculos.length === 0 ? (
+        <Card>
+          <EstadoVacio
+            icono={Car}
+            titulo="Aún no hay vehículos"
+            descripcion={
+              puedeOperar
+                ? 'Registra la primera unidad para empezar.'
+                : 'Cuando Inventario registre unidades, aparecerán aquí.'
+            }
+            accion={agregar}
+          />
+        </Card>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <TarjetaDato etiqueta="Unidades registradas" valor={vehiculos.length} icono={Car} />
+            <TarjetaDato etiqueta="Disponibles" valor={cuenta('DISPONIBLE')} icono={CircleCheck} />
+            <TarjetaDato etiqueta="Apartadas" valor={cuenta('APARTADA')} icono={Lock} />
+            <TarjetaDato etiqueta="No disponibles" valor={cuenta('NO_DISPONIBLE')} icono={Ban} />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-[1fr_16rem]">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="buscar-vehiculo">Buscar vehículo</Label>
+              <div className="relative">
+                <Search
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                />
+                <Input
+                  id="buscar-vehiculo"
+                  type="search"
+                  placeholder="VIN, modelo o versión"
+                  className="pl-9"
+                  value={busqueda}
+                  onChange={(e) => {
+                    setBusqueda(e.target.value)
+                    setPagina(1)
+                  }}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="filtro-estatus">Estatus</Label>
+              <Select
+                value={estatus}
+                onValueChange={(valor) => {
+                  setEstatus(valor as EstatusVehiculo | typeof TODOS)
+                  setPagina(1)
+                }}
+              >
+                <SelectTrigger id="filtro-estatus" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={TODOS}>Todos los estatus</SelectItem>
+                  {ESTATUS_VEHICULO.map((valor) => (
+                    <SelectItem key={valor} value={valor}>
+                      {NOMBRE_ESTATUS[valor]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {filtrados.length === 0 ? (
+            <Card>
+              <EstadoVacio
+                icono={Search}
+                titulo="Ningún vehículo coincide"
+                descripcion="Prueba con otro VIN, modelo o estatus."
+              />
+            </Card>
+          ) : (
+            <>
+              <ListaVehiculos
+                vehiculos={deLaPagina(filtrados, pagina, POR_PAGINA)}
+                puedeOperar={puedeOperar}
+              />
+              <Paginacion
+                pagina={pagina}
+                porPagina={POR_PAGINA}
+                total={filtrados.length}
+                nombre="vehículos"
+                onCambiar={setPagina}
+              />
+            </>
+          )}
+        </>
+      )}
+    </section>
+  )
+}
+
+function ListaVehiculos({ vehiculos, puedeOperar }: { vehiculos: Vehiculo[]; puedeOperar: boolean }) {
+  // Menos de 1024 px: una tarjeta por elemento, como el menú lateral.
+  const movil = useIsMobile()
+  if (!movil) {
+    return (
+      // Escritorio: tabla
+      <Card className="py-0 md:py-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Vehículo</TableHead>
+              <TableHead>VIN</TableHead>
+              <TableHead>Color</TableHead>
+              <TableHead className="text-right">Precio (MXN)</TableHead>
+              <TableHead>Estatus</TableHead>
+              {puedeOperar && (
+                <TableHead>
+                  <span className="sr-only">Acciones</span>
+                </TableHead>
+              )}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {vehiculos.map((v) => (
+              <TableRow key={v.id}>
+                <TableCell>
+                  <span className="block font-medium">{v.modelo}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {v.version} · {v.anio}
+                  </span>
+                </TableCell>
+                <TableCell className="font-mono text-sm">{v.vin}</TableCell>
+                <TableCell>{v.color}</TableCell>
+                <TableCell className="text-right tabular-nums">{formatearMoneda(v.precio)}</TableCell>
+                <TableCell>
+                  <ChipEstado tono={TONO_ESTATUS[v.estatus]}>{NOMBRE_ESTATUS[v.estatus]}</ChipEstado>
+                </TableCell>
+                {puedeOperar && (
+                  <TableCell className="w-12 text-right">
+                    <AccionesVehiculo vehiculo={v} />
+                  </TableCell>
+                )}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+    )
+  }
+
+  return (
+    // Celular: una tarjeta por unidad
+    <ul className="flex flex-col gap-3">
+      {vehiculos.map((v) => (
+        <li key={v.id}>
+          <Card className="gap-2 py-4">
+            <div className="flex items-start justify-between gap-2 px-4">
+              <div>
+                <p className="font-semibold">
+                  {v.modelo} {v.version}
+                </p>
+                <p className="font-mono text-xs text-muted-foreground">{v.vin}</p>
+              </div>
+              {puedeOperar && <AccionesVehiculo vehiculo={v} />}
+            </div>
+            <p className="px-4 text-lg font-semibold tabular-nums">
+              {formatearMoneda(v.precio)} MXN
+            </p>
+            <div className="flex items-center gap-2 px-4 text-sm text-muted-foreground">
+              <ChipEstado tono={TONO_ESTATUS[v.estatus]}>{NOMBRE_ESTATUS[v.estatus]}</ChipEstado>
+              {v.color} · {v.anio}
+            </div>
+          </Card>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function AccionesVehiculo({ vehiculo }: { vehiculo: Vehiculo }) {
+  const navegar = useNavigate()
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label={`Acciones de ${vehiculo.vin}`}>
+          <Ellipsis aria-hidden="true" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={() => navegar(`/vehiculos/${vehiculo.id}/editar`)}>
+          Editar
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
