@@ -1,218 +1,165 @@
+/*
+ * Tema de Agencia360 según la guía de estilos (estilos.pdf, secciones 2 a 5).
+ *
+ * Orden de capas: el CSS anterior (capa "anteriores") queda por debajo de los
+ * componentes y utilidades de Tailwind, así que nunca pisa una pantalla nueva.
+ * Se borra cuando el login y la administración de usuarios se migren a
+ * shadcn/ui (sección 8 de la guía).
+ */
+@layer theme, base, anteriores, components, utilities;
+
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./shadcn.css";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+@import "./estilos-anteriores.css" layer(anteriores);
+
+@custom-variant dark (&:is(.dark *));
+
 :root {
-  --color-texto: #1f2937;
-  --color-suave: #6b7280;
-  --color-borde: #d1d5db;
-  --color-fondo: #f5f6f8;
-  --color-superficie: #ffffff;
-  --color-primario: #0f6e56;
-  --color-primario-oscuro: #0b5442;
-  --color-error: #b42318;
-  --color-error-fondo: #fef3f2;
-  --color-ok: #067647;
-  --color-ok-fondo: #ecfdf3;
-  --color-aviso-fondo: #fef3c7;
+  --radius: 0.5rem;
 
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  color: var(--color-texto);
-  background: var(--color-fondo);
-  line-height: 1.5;
+  --background: #f5f7fa;
+  --foreground: #1f2933;
+  --card: #ffffff;
+  --card-foreground: #1f2933;
+  --popover: #ffffff;
+  --popover-foreground: #1f2933;
+
+  --primary: #1d3557;
+  --primary-hover: #142640;
+  --primary-foreground: #ffffff;
+  --secondary: #edf0f4;
+  --secondary-foreground: #1d3557;
+  --muted: #edf0f4;
+  --muted-foreground: #52606d;
+  --accent: #e8edf4;
+  --accent-foreground: #1d3557;
+  --destructive: #b42318;
+
+  --border: #e2e7ee;
+  --input: #cbd2dc;
+  --ring: #1d3557;
+
+  --chart-1: #1d3557;
+  --chart-2: #168f84;
+  --chart-3: #d08a1e;
+  --chart-4: #7fa6d6;
+  --chart-5: #6b7a90;
+
+  /*
+   * Menú lateral (decisión del equipo del 13 de octubre: menú a la izquierda).
+   * La guía no trae estos tokens; salen de su paleta: fondo Azul Agencia,
+   * sección activa en Azul profundo y acento Turquesa 360 sobre fondo oscuro.
+   */
+  --sidebar: #1d3557;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #2ec4b6;
+  --sidebar-primary-foreground: #1d3557;
+  --sidebar-accent: #142640;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2c4870;
+  --sidebar-ring: #2ec4b6;
+
+  /* Propios de Agencia360 */
+  --marca-acento: #2ec4b6;
+  --marca-acento-claro: #168f84;
+  --exito: #1b6e3a;
+  --exito-fondo: #eaf5ee;
+  --advertencia: #8a5a00;
+  --advertencia-fondo: #fdf6e3;
+  --peligro-fondo: #fdecea;
 }
 
-* {
-  box-sizing: border-box;
+.dark {
+  --background: #0f1724;
+  --foreground: #e5e9f0;
+  --card: #172131;
+  --card-foreground: #e5e9f0;
+  --popover: #172131;
+  --popover-foreground: #e5e9f0;
+  --primary: #7fa6d6;
+  --primary-hover: #a3bfe2;
+  --primary-foreground: #0f1724;
+  --secondary: #1f2c3d;
+  --secondary-foreground: #e5e9f0;
+  --muted: #1f2c3d;
+  --muted-foreground: #9aa7b8;
+  --accent: #1f2c3d;
+  --accent-foreground: #e5e9f0;
+  --destructive: #f28b82;
+  --border: #2a3647;
+  --input: #3e4c59;
+  --ring: #7fa6d6;
+  --sidebar: #172131;
+  --sidebar-foreground: #e5e9f0;
+  --sidebar-accent: #1f2c3d;
+  --sidebar-accent-foreground: #e5e9f0;
+  --sidebar-border: #2a3647;
+  --exito: #7cc897;
+  --exito-fondo: #14261b;
+  --advertencia: #e6b450;
+  --advertencia-fondo: #2b2310;
+  --peligro-fondo: #2d1513;
 }
 
-body {
-  margin: 0;
+@theme inline {
+  --font-sans: "Inter Variable", system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-marca-acento: var(--marca-acento);
+  --color-marca-acento-claro: var(--marca-acento-claro);
+  --color-exito: var(--exito);
+  --color-exito-fondo: var(--exito-fondo);
+  --color-advertencia: var(--advertencia);
+  --color-advertencia-fondo: var(--advertencia-fondo);
+  --color-peligro-fondo: var(--peligro-fondo);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-h1 {
-  font-size: 1.5rem;
-  margin: 0 0 0.5rem;
-}
-
-h2 {
-  font-size: 1.125rem;
-  margin: 1.5rem 0 0.75rem;
-}
-
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-input,
-select {
-  font: inherit;
-  font-weight: 400;
-  padding: 0.5rem 0.625rem;
-  border: 1px solid var(--color-borde);
-  border-radius: 6px;
-  background: var(--color-superficie);
-}
-
-button {
-  font: inherit;
-  font-weight: 600;
-  padding: 0.55rem 1rem;
-  border: 1px solid var(--color-primario);
-  border-radius: 6px;
-  background: var(--color-primario);
-  color: #ffffff;
-  cursor: pointer;
-}
-
-button:hover:not(:disabled) {
-  background: var(--color-primario-oscuro);
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: progress;
-}
-
-button.secundario {
-  background: transparent;
-  color: var(--color-primario);
-}
-
-button.secundario:hover {
-  background: var(--color-fondo);
-}
-
-.ayuda {
-  color: var(--color-suave);
-}
-
-.error,
-.confirmacion,
-.aviso {
-  padding: 0.625rem 0.75rem;
-  border-radius: 6px;
-  margin: 0.5rem 0;
-}
-
-.error {
-  background: var(--color-error-fondo);
-  color: var(--color-error);
-}
-
-.confirmacion {
-  background: var(--color-ok-fondo);
-  color: var(--color-ok);
-}
-
-.aviso {
-  background: var(--color-aviso-fondo);
-}
-
-/* Login */
-.login {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-}
-
-.tarjeta {
-  width: 100%;
-  max-width: 380px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 2rem;
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: 10px;
-}
-
-.tarjeta label {
-  margin-top: 0.25rem;
-}
-
-/* Estructura de la aplicación */
-.encabezado {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 1rem 2rem;
-  padding: 0.75rem 1.5rem;
-  background: var(--color-superficie);
-  border-bottom: 1px solid var(--color-borde);
-}
-
-.marca {
-  font-weight: 700;
-  color: var(--color-primario);
-}
-
-.menu {
-  display: flex;
-  gap: 1rem;
-  flex: 1;
-}
-
-.menu a {
-  color: var(--color-texto);
-  text-decoration: none;
-  padding: 0.25rem 0;
-  border-bottom: 2px solid transparent;
-}
-
-.menu a.active {
-  border-bottom-color: var(--color-primario);
-  font-weight: 600;
-}
-
-.usuario-actual {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.875rem;
-}
-
-.contenido {
-  padding: 1.5rem;
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
-.pagina {
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: 10px;
-  padding: 1.5rem;
-}
-
-.accesos {
-  padding-left: 1.25rem;
-}
-
-/* Usuarios */
-.formulario-usuario {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.75rem;
-  align-items: end;
-}
-
-.tabla {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9375rem;
-}
-
-.tabla th,
-.tabla td {
-  text-align: left;
-  padding: 0.5rem 0.625rem;
-  border-bottom: 1px solid var(--color-borde);
-}
-
-.tabla th {
-  font-size: 0.8125rem;
-  color: var(--color-suave);
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
 }
