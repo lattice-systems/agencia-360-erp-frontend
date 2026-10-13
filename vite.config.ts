@@ -17,5 +17,8 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
     css: false,
+    // Las pruebas que llenan formularios con userEvent tardan más que el límite
+    // de 5 s cuando la suite corre en paralelo en el CI o con cobertura.
+    testTimeout: 15_000,
   },
 })
