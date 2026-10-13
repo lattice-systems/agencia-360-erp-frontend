@@ -68,7 +68,7 @@ function MenuLateral() {
       <SidebarHeader className="gap-3 px-4 pt-5">
         <Link to="/" onClick={() => setOpenMobile(false)} className="rounded-md">
           <img
-            src="/agencia360-logo-blanco.png"
+            src="/agencia360-logo-blanco.svg"
             alt="Agencia360"
             className="h-auto w-[180px]"
           />

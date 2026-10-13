@@ -11,12 +11,25 @@ const ROLES: RolApi[] = [
   { nombre: 'INVENTARIO', descripcion: 'Inventario', accesoErp: true, accesoCrm: false },
 ]
 
-const CAJERO: UsuarioApi = {
-  id: 1,
-  usuario: 'caja1',
-  nombre: 'Carla Cajera',
-  rol: 'CAJA',
+const CAJERO: UsuarioApi = { id: 1, usuario: 'caja1', nombre: 'Carla Cajera', rol: 'CAJA', activo: true }
+const PROPIO: UsuarioApi = {
+  id: 9,
+  usuario: 'usuario.prueba',
+  nombre: 'Persona de Prueba',
+  rol: 'ADMINISTRADOR',
   activo: true,
+}
+
+async function abrirCrearUsuario() {
+  const usuarioEvento = userEvent.setup()
+  await screen.findByText('Carla Cajera')
+  await usuarioEvento.click(screen.getByRole('button', { name: 'Crear usuario' }))
+  return { usuarioEvento, dialogo: await screen.findByRole('dialog', { name: 'Crear usuario' }) }
+}
+
+async function elegirRol(usuarioEvento: ReturnType<typeof userEvent.setup>, combo: HTMLElement, rol: string) {
+  await usuarioEvento.click(combo)
+  await usuarioEvento.click(await screen.findByRole('option', { name: rol }))
 }
 
 describe('Administración de usuarios', () => {
@@ -27,7 +40,7 @@ describe('Administración de usuarios', () => {
     servidor.use(
       http.get(`${API}/api/v1/usuarios`, ({ request }) =>
         request.headers.get('Authorization') === `Bearer ${token}`
-          ? HttpResponse.json([CAJERO])
+          ? HttpResponse.json([CAJERO, PROPIO])
           : new HttpResponse(null, { status: 401 }),
       ),
       http.get(`${API}/api/v1/roles`, () => HttpResponse.json(ROLES)),
@@ -37,12 +50,34 @@ describe('Administración de usuarios', () => {
   it('lista los usuarios del ERP enviando el token', async () => {
     renderApp('/usuarios')
 
+    expect(await screen.findByRole('heading', { level: 1, name: 'Usuarios y roles' })).toBeInTheDocument()
     const fila = (await screen.findByText('Carla Cajera')).closest('tr')!
     expect(within(fila).getByText('caja1')).toBeInTheDocument()
-    expect(within(fila).getByRole('combobox', { name: 'Rol de caja1' })).toHaveValue('CAJA')
+    expect(within(fila).getByText('Caja')).toBeInTheDocument()
+    expect(within(fila).getByText('Activo')).toBeInTheDocument()
   })
 
-  it('crea un usuario y lo agrega a la lista', async () => {
+  it('busca por nombre o usuario', async () => {
+    renderApp('/usuarios')
+    await screen.findByText('Carla Cajera')
+
+    await userEvent.setup().type(screen.getByLabelText('Buscar usuario'), 'prueba')
+
+    expect(screen.queryByText('Carla Cajera')).not.toBeInTheDocument()
+    expect(screen.getByText('usuario.prueba')).toBeInTheDocument()
+  })
+
+  it('filtra por rol', async () => {
+    renderApp('/usuarios')
+    await screen.findByText('Carla Cajera')
+    const usuarioEvento = userEvent.setup()
+
+    await elegirRol(usuarioEvento, screen.getByRole('combobox', { name: 'Rol' }), 'Inventario')
+
+    expect(screen.getByText('Ningún usuario coincide')).toBeInTheDocument()
+  })
+
+  it('crea un usuario desde el diálogo y lo agrega a la lista', async () => {
     let cuerpoEnviado: unknown
     servidor.use(
       http.post(`${API}/api/v1/usuarios`, async ({ request }) => {
@@ -54,26 +89,26 @@ describe('Administración de usuarios', () => {
       }),
     )
     renderApp('/usuarios')
-    await screen.findByText('Carla Cajera')
-    const usuarioEvento = userEvent.setup()
+    const { usuarioEvento, dialogo } = await abrirCrearUsuario()
 
-    await usuarioEvento.type(screen.getByLabelText('Usuario'), 'inv1')
-    await usuarioEvento.type(screen.getByLabelText('Nombre'), 'Iván Inventario')
-    await usuarioEvento.type(screen.getByLabelText('Contraseña'), 'Otra12345')
-    await usuarioEvento.selectOptions(screen.getByLabelText('Rol'), 'INVENTARIO')
-    await usuarioEvento.click(screen.getByRole('button', { name: 'Crear usuario' }))
+    await usuarioEvento.type(within(dialogo).getByLabelText('Nombre completo'), 'Iván Inventario')
+    await usuarioEvento.type(within(dialogo).getByLabelText('Usuario'), 'inv1')
+    await elegirRol(usuarioEvento, within(dialogo).getByRole('combobox', { name: 'Rol' }), 'Inventario')
+    await usuarioEvento.type(within(dialogo).getByLabelText('Contraseña inicial'), 'Otra12345')
+    await usuarioEvento.click(within(dialogo).getByRole('button', { name: 'Crear usuario' }))
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Usuario inv1 creado.')
+    expect(await screen.findByText('Usuario inv1 creado.')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(screen.getByText('Iván Inventario')).toBeInTheDocument()
     expect(cuerpoEnviado).toEqual({
-      usuario: 'inv1',
       nombre: 'Iván Inventario',
+      usuario: 'inv1',
       contrasena: 'Otra12345',
       rol: 'INVENTARIO',
     })
   })
 
-  it('muestra el error del backend si el usuario ya existe', async () => {
+  it('marca el usuario repetido con el mensaje del backend y conserva lo capturado', async () => {
     servidor.use(
       http.post(`${API}/api/v1/usuarios`, () =>
         HttpResponse.json(
@@ -83,30 +118,34 @@ describe('Administración de usuarios', () => {
       ),
     )
     renderApp('/usuarios')
-    await screen.findByText('Carla Cajera')
-    const usuarioEvento = userEvent.setup()
+    const { usuarioEvento, dialogo } = await abrirCrearUsuario()
 
-    await usuarioEvento.type(screen.getByLabelText('Usuario'), 'caja1')
-    await usuarioEvento.type(screen.getByLabelText('Nombre'), 'Otra persona')
-    await usuarioEvento.type(screen.getByLabelText('Contraseña'), 'Otra12345')
-    await usuarioEvento.selectOptions(screen.getByLabelText('Rol'), 'CAJA')
-    await usuarioEvento.click(screen.getByRole('button', { name: 'Crear usuario' }))
+    await usuarioEvento.type(within(dialogo).getByLabelText('Nombre completo'), 'Otra persona')
+    await usuarioEvento.type(within(dialogo).getByLabelText('Usuario'), 'caja1')
+    await elegirRol(usuarioEvento, within(dialogo).getByRole('combobox', { name: 'Rol' }), 'Caja')
+    await usuarioEvento.type(within(dialogo).getByLabelText('Contraseña inicial'), 'Otra12345')
+    await usuarioEvento.click(within(dialogo).getByRole('button', { name: 'Crear usuario' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Ya existe un usuario con el nombre de usuario caja1',
-    )
+    expect(
+      await within(dialogo).findByText('Ya existe un usuario con el nombre de usuario caja1'),
+    ).toBeInTheDocument()
+    expect(within(dialogo).getByLabelText('Usuario')).toHaveAttribute('aria-invalid', 'true')
+    expect(within(dialogo).getByLabelText('Nombre completo')).toHaveValue('Otra persona')
   })
 
   it('pide todos los campos antes de crear', async () => {
     renderApp('/usuarios')
-    await screen.findByText('Carla Cajera')
+    const { usuarioEvento, dialogo } = await abrirCrearUsuario()
 
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Crear usuario' }))
+    await usuarioEvento.click(within(dialogo).getByRole('button', { name: 'Crear usuario' }))
 
-    expect(screen.getByRole('alert')).toHaveTextContent('Completa usuario, nombre, contraseña y rol.')
+    expect(await within(dialogo).findByText('Escribe el nombre completo.')).toBeInTheDocument()
+    expect(within(dialogo).getByText('Escribe el usuario.')).toBeInTheDocument()
+    expect(within(dialogo).getByText('Elige un rol.')).toBeInTheDocument()
+    expect(within(dialogo).getByText('Escribe la contraseña inicial.')).toBeInTheDocument()
   })
 
-  it('cambia el rol de un usuario', async () => {
+  it('cambia el rol desde el menú de la fila', async () => {
     let cuerpoEnviado: unknown
     servidor.use(
       http.put(`${API}/api/v1/usuarios/1/rol`, async ({ request }) => {
@@ -115,41 +154,37 @@ describe('Administración de usuarios', () => {
       }),
     )
     renderApp('/usuarios')
-    const selector = await screen.findByRole('combobox', { name: 'Rol de caja1' })
+    await screen.findByText('Carla Cajera')
+    const usuarioEvento = userEvent.setup()
 
-    await userEvent.setup().selectOptions(selector, 'INVENTARIO')
+    await usuarioEvento.click(screen.getByRole('button', { name: 'Acciones de caja1' }))
+    await usuarioEvento.click(await screen.findByRole('menuitem', { name: 'Cambiar rol' }))
+    const dialogo = await screen.findByRole('dialog', { name: 'Cambiar rol' })
+    await elegirRol(usuarioEvento, within(dialogo).getByRole('combobox', { name: 'Nuevo rol' }), 'Inventario')
+    await usuarioEvento.click(within(dialogo).getByRole('button', { name: 'Guardar rol' }))
 
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      'El rol de caja1 ahora es Inventario.',
-    )
+    expect(await screen.findByText('El rol de caja1 ahora es Inventario.')).toBeInTheDocument()
     expect(cuerpoEnviado).toEqual({ rol: 'INVENTARIO' })
-    expect(selector).toHaveValue('INVENTARIO')
+    const fila = screen.getByText('Carla Cajera').closest('tr')!
+    expect(within(fila).getByText('Inventario')).toBeInTheDocument()
   })
 
   it('no permite que el administrador cambie su propio rol', async () => {
-    servidor.use(
-      http.get(`${API}/api/v1/usuarios`, () =>
-        HttpResponse.json([
-          { id: 9, usuario: 'usuario.prueba', nombre: 'Persona de Prueba', rol: 'ADMINISTRADOR', activo: true },
-          CAJERO,
-        ]),
-      ),
-    )
     renderApp('/usuarios')
+    await screen.findByText('usuario.prueba')
 
-    expect(await screen.findByRole('combobox', { name: 'Rol de usuario.prueba' })).toBeDisabled()
-    expect(screen.getByRole('combobox', { name: 'Rol de caja1' })).toBeEnabled()
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Acciones de usuario.prueba' }))
+
+    expect(
+      await screen.findByRole('menuitem', { name: 'No puedes cambiar tu propio rol' }),
+    ).toHaveAttribute('aria-disabled', 'true')
   })
 
   it('cierra la sesión si el backend responde que el token ya no es válido', async () => {
-    servidor.use(
-      http.get(`${API}/api/v1/usuarios`, () => new HttpResponse(null, { status: 401 })),
-    )
+    servidor.use(http.get(`${API}/api/v1/usuarios`, () => new HttpResponse(null, { status: 401 })))
     renderApp('/usuarios')
 
-    expect(
-      await screen.findByText('Tu sesión expiró. Inicia sesión de nuevo.'),
-    ).toBeInTheDocument()
+    expect(await screen.findByText('Tu sesión expiró. Inicia sesión de nuevo.')).toBeInTheDocument()
     expect(sessionStorage.length).toBe(0)
   })
 })
