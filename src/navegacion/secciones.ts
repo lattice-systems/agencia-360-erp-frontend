@@ -1,7 +1,7 @@
 // Secciones del ERP y los roles que pueden entrar a cada una, según la matriz
 // de roles. Cada módulo nuevo del ERP agrega aquí su sección; con eso aparece
 // en el menú lateral y su ruta queda protegida.
-import { UserCog, type LucideIcon } from 'lucide-react'
+import { Car, ClipboardList, Package, UserCog, type LucideIcon } from 'lucide-react'
 import type { Rol } from '../api/acceso.ts'
 
 /** Grupos del menú lateral, en el orden en que se muestran. */
@@ -19,6 +19,29 @@ export interface Seccion {
 }
 
 export const SECCIONES: Seccion[] = [
+  // ERP-2.0, permisos decididos por el PO el 13 de octubre: Inventario opera
+  // las dos; el Administrador solo consulta; Refacciones consulta su stock.
+  {
+    ruta: '/vehiculos',
+    titulo: 'Vehículos',
+    grupo: 'Operación',
+    icono: Car,
+    roles: ['INVENTARIO', 'ADMINISTRADOR'],
+  },
+  {
+    ruta: '/refacciones',
+    titulo: 'Refacciones',
+    grupo: 'Operación',
+    icono: Package,
+    roles: ['INVENTARIO', 'REFACCIONES', 'ADMINISTRADOR'],
+  },
+  {
+    ruta: '/recepciones',
+    titulo: 'Recepciones',
+    grupo: 'Operación',
+    icono: ClipboardList,
+    roles: ['INVENTARIO'],
+  },
   {
     ruta: '/usuarios',
     titulo: 'Usuarios',
@@ -27,6 +50,9 @@ export const SECCIONES: Seccion[] = [
     roles: ['ADMINISTRADOR'],
   },
 ]
+
+/** Solo Inventario da de alta, corrige y recibe artículos. */
+export const ROLES_OPERACION_INVENTARIO: Rol[] = ['INVENTARIO']
 
 export function seccionesPara(rol: Rol): Seccion[] {
   return SECCIONES.filter((seccion) => seccion.roles.includes(rol))
