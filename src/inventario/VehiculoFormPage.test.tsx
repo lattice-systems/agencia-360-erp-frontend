@@ -8,7 +8,7 @@ import type { DatosVehiculo } from './api.ts'
 import { KICKS_APARTADA, SENTRA } from './datosDePrueba.ts'
 
 async function llenarFormulario(datos: Partial<Record<string, string>> = {}) {
-  const usuario = userEvent.setup()
+  const usuario = userEvent.setup({ delay: null })
   const valores = {
     VIN: ' 3n1ab8cv5py123456 ',
     Modelo: 'Sentra',
@@ -168,7 +168,7 @@ describe('Alta y edición de vehículos', () => {
     expect(screen.getByText('Este estatus lo cambia Ventas.')).toBeInTheDocument()
     expect(screen.getByLabelText('Precio (MXN)')).toHaveValue('529900.00')
 
-    const usuario = userEvent.setup()
+    const usuario = userEvent.setup({ delay: null })
     await usuario.clear(screen.getByLabelText('Color'))
     await usuario.type(screen.getByLabelText('Color'), 'Rojo')
     await usuario.click(screen.getByRole('button', { name: 'Guardar vehículo' }))
@@ -183,4 +183,17 @@ describe('Alta y edición de vehículos', () => {
 
     expect(screen.getByRole('heading', { name: 'Sin permiso' })).toBeInTheDocument()
   })
+
+  it('si el token vence al guardar, regresa al login con el aviso', async () => {
+    conSesion('INVENTARIO')
+    servidor.use(http.post(`${API}/api/v1/vehiculos`, () => new HttpResponse(null, { status: 401 })))
+    renderApp('/vehiculos/nuevo')
+
+    const usuario = await llenarFormulario()
+    await usuario.click(screen.getByRole('button', { name: 'Guardar vehículo' }))
+
+    expect(await screen.findByText('Tu sesión expiró. Inicia sesión de nuevo.')).toBeInTheDocument()
+    expect(sessionStorage.length).toBe(0)
+  })
+
 })

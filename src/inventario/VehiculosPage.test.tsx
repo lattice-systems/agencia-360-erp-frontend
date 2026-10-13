@@ -53,7 +53,7 @@ describe('Inventario de vehículos', () => {
     renderApp('/vehiculos')
     await screen.findByText('3N1AB8CV5PY123456')
 
-    await userEvent.setup().type(screen.getByLabelText('Buscar vehículo'), 'kicks')
+    await userEvent.setup({ delay: null }).type(screen.getByLabelText('Buscar vehículo'), 'kicks')
 
     expect(screen.getByText('3N1CP5CV6RL123458')).toBeInTheDocument()
     expect(screen.queryByText('3N1AB8CV5PY123456')).not.toBeInTheDocument()
@@ -65,7 +65,7 @@ describe('Inventario de vehículos', () => {
     conVehiculos()
     renderApp('/vehiculos')
     await screen.findByText('3N1AB8CV5PY123456')
-    const usuario = userEvent.setup()
+    const usuario = userEvent.setup({ delay: null })
 
     await usuario.click(screen.getByRole('combobox', { name: 'Estatus' }))
     await usuario.click(await screen.findByRole('option', { name: 'No disponible' }))
@@ -80,7 +80,7 @@ describe('Inventario de vehículos', () => {
     renderApp('/vehiculos')
     await screen.findByText('3N1AB8CV5PY123456')
 
-    await userEvent.setup().type(screen.getByLabelText('Buscar vehículo'), 'tsuru')
+    await userEvent.setup({ delay: null }).type(screen.getByLabelText('Buscar vehículo'), 'tsuru')
 
     expect(screen.getByText('Ningún vehículo coincide')).toBeInTheDocument()
   })
@@ -108,7 +108,7 @@ describe('Inventario de vehículos', () => {
     renderApp('/vehiculos')
 
     expect(await screen.findByText('Servicio no disponible')).toBeInTheDocument()
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Reintentar' }))
+    await userEvent.setup({ delay: null }).click(screen.getByRole('button', { name: 'Reintentar' }))
 
     expect(await screen.findByText('3N1AB8CV5PY123456')).toBeInTheDocument()
   })
@@ -118,7 +118,7 @@ describe('Inventario de vehículos', () => {
     conVehiculos()
     servidor.use(http.get(`${API}/api/v1/vehiculos/1`, () => HttpResponse.json(SENTRA)))
     renderApp('/vehiculos')
-    const usuario = userEvent.setup()
+    const usuario = userEvent.setup({ delay: null })
 
     await usuario.click(await screen.findByRole('button', { name: 'Acciones de 3N1AB8CV5PY123456' }))
     await usuario.click(await screen.findByRole('menuitem', { name: 'Editar' }))
@@ -133,4 +133,47 @@ describe('Inventario de vehículos', () => {
 
     expect(await screen.findByText('Tu sesión expiró. Inicia sesión de nuevo.')).toBeInTheDocument()
   })
+
+  it('pagina de 10 en 10', async () => {
+    conSesion('INVENTARIO')
+    const doce = Array.from({ length: 12 }, (_, i) => ({
+      ...SENTRA,
+      id: i + 1,
+      vin: `3N1AB8CV5PY1234${String(i).padStart(2, '0')}`,
+    }))
+    conVehiculos(doce)
+    renderApp('/vehiculos')
+    const usuario = userEvent.setup({ delay: null })
+
+    expect(await screen.findByText('Mostrando 1 a 10 de 12 vehículos')).toBeInTheDocument()
+    expect(screen.getAllByRole('row')).toHaveLength(11)
+    expect(screen.getByRole('button', { name: 'Anterior' })).toBeDisabled()
+
+    await usuario.click(screen.getByRole('button', { name: 'Siguiente' }))
+    expect(screen.getByText('Mostrando 11 a 12 de 12 vehículos')).toBeInTheDocument()
+    expect(screen.getAllByRole('row')).toHaveLength(3)
+    expect(screen.getByRole('button', { name: 'Siguiente' })).toBeDisabled()
+
+    await usuario.click(screen.getByRole('button', { name: 'Anterior' }))
+    expect(screen.getByText('Mostrando 1 a 10 de 12 vehículos')).toBeInTheDocument()
+  })
+
+  it('al buscar regresa a la primera página', async () => {
+    conSesion('INVENTARIO')
+    conVehiculos(
+      Array.from({ length: 12 }, (_, i) => ({
+        ...SENTRA,
+        id: i + 1,
+        vin: `3N1AB8CV5PY1234${String(i).padStart(2, '0')}`,
+      })),
+    )
+    renderApp('/vehiculos')
+    const usuario = userEvent.setup({ delay: null })
+
+    await usuario.click(await screen.findByRole('button', { name: 'Siguiente' }))
+    await usuario.type(screen.getByLabelText('Buscar vehículo'), '123411')
+
+    expect(screen.getByText('Mostrando 1 a 1 de 1 vehículos')).toBeInTheDocument()
+  })
+
 })

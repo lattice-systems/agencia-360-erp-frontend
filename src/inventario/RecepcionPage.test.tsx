@@ -36,7 +36,7 @@ describe('Registro de recepción', () => {
     expect(await screen.findByRole('combobox', { name: 'Refacción' })).toHaveTextContent('REF-002')
     expect(screen.getByText('Balatas delanteras')).toBeInTheDocument()
 
-    await userEvent.setup().type(screen.getByLabelText('Cantidad recibida'), '10')
+    await userEvent.setup({ delay: null }).type(screen.getByLabelText('Cantidad recibida'), '10')
 
     expect(screen.getByText('Nueva existencia').nextElementSibling).toHaveTextContent('13')
     expect(screen.getByText('Disponible')).toBeInTheDocument()
@@ -61,7 +61,7 @@ describe('Registro de recepción', () => {
       }),
     )
     renderApp('/recepciones?refaccion=2')
-    const usuario = userEvent.setup()
+    const usuario = userEvent.setup({ delay: null })
 
     await usuario.type(await screen.findByLabelText('Cantidad recibida'), '10')
     fireEvent.change(screen.getByLabelText('Fecha de llegada'), { target: { value: '2026-10-12T09:30' } })
@@ -92,7 +92,7 @@ describe('Registro de recepción', () => {
       }),
     )
     renderApp('/recepciones?refaccion=1')
-    const usuario = userEvent.setup()
+    const usuario = userEvent.setup({ delay: null })
 
     await usuario.type(await screen.findByLabelText('Cantidad recibida'), '4')
     await usuario.type(screen.getByLabelText('Proveedor'), 'Distribuidora León')
@@ -105,7 +105,7 @@ describe('Registro de recepción', () => {
   it('valida la refacción, la cantidad, el proveedor y que la llegada no sea futura', async () => {
     conSesion('INVENTARIO')
     renderApp('/recepciones')
-    const usuario = userEvent.setup()
+    const usuario = userEvent.setup({ delay: null })
 
     await usuario.type(await screen.findByLabelText('Cantidad recibida'), '0')
     fireEvent.change(screen.getByLabelText('Fecha de llegada'), { target: { value: '2099-01-01T10:00' } })
@@ -125,7 +125,7 @@ describe('Registro de recepción', () => {
       ),
     )
     renderApp('/recepciones?refaccion=2')
-    const usuario = userEvent.setup()
+    const usuario = userEvent.setup({ delay: null })
 
     await usuario.type(await screen.findByLabelText('Cantidad recibida'), '3')
     await usuario.type(screen.getByLabelText('Proveedor'), 'Bajío')
@@ -143,4 +143,14 @@ describe('Registro de recepción', () => {
 
     expect(screen.getByRole('heading', { name: 'Sin permiso' })).toBeInTheDocument()
   })
+
+  it('sin refacciones, invita a darlas de alta primero', async () => {
+    conSesion('INVENTARIO')
+    servidor.use(http.get(`${API}/api/v1/refacciones`, () => HttpResponse.json([])))
+    renderApp('/recepciones')
+
+    expect(await screen.findByText('Aún no hay refacciones')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Agregar refacción' })).toHaveAttribute('href', '/refacciones/nueva')
+  })
+
 })

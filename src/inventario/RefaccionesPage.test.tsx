@@ -43,7 +43,7 @@ describe('Inventario de refacciones', () => {
     expect(
       await screen.findByText('2 refacciones llegaron a su existencia mínima'),
     ).toBeInTheDocument()
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Ver por resurtir' }))
+    await userEvent.setup({ delay: null }).click(screen.getByRole('button', { name: 'Ver por resurtir' }))
 
     expect(screen.getByText('REF-002')).toBeInTheDocument()
     expect(screen.getByText('REF-004')).toBeInTheDocument()
@@ -63,7 +63,7 @@ describe('Inventario de refacciones', () => {
     conSesion('REFACCIONES')
     conRefacciones()
     renderApp('/refacciones')
-    const usuario = userEvent.setup()
+    const usuario = userEvent.setup({ delay: null })
 
     await usuario.click(await screen.findByRole('button', { name: 'Acciones de REF-001' }))
 
@@ -80,7 +80,7 @@ describe('Inventario de refacciones', () => {
       http.get(`${API}/api/v1/refacciones/2/recepciones`, () => HttpResponse.json([RECEPCION_TARDIA])),
     )
     renderApp('/refacciones')
-    const usuario = userEvent.setup()
+    const usuario = userEvent.setup({ delay: null })
 
     await usuario.click(await screen.findByRole('button', { name: 'Acciones de REF-002' }))
     await usuario.click(screen.getByRole('menuitem', { name: 'Ver recepciones' }))
@@ -99,6 +99,88 @@ describe('Inventario de refacciones', () => {
 
     expect(screen.getByRole('heading', { name: 'Sin permiso' })).toBeInTheDocument()
   })
+
+  it('el historial avisa cuando la refacción no tiene recepciones', async () => {
+    conSesion('ADMINISTRADOR')
+    conRefacciones()
+    servidor.use(http.get(`${API}/api/v1/refacciones/4/recepciones`, () => HttpResponse.json([])))
+    renderApp('/refacciones')
+    const usuario = userEvent.setup({ delay: null })
+
+    await usuario.click(await screen.findByRole('button', { name: 'Acciones de REF-004' }))
+    await usuario.click(screen.getByRole('menuitem', { name: 'Ver recepciones' }))
+
+    const dialogo = await screen.findByRole('dialog', { name: 'Recepciones' })
+    expect(await within(dialogo).findByText('Sin recepciones')).toBeInTheDocument()
+  })
+
+  it('el historial muestra el error si no se pudo cargar', async () => {
+    conSesion('ADMINISTRADOR')
+    conRefacciones()
+    servidor.use(
+      http.get(`${API}/api/v1/refacciones/2/recepciones`, () =>
+        HttpResponse.json({ message: 'No existe la refacción 2' }, { status: 404 }),
+      ),
+    )
+    renderApp('/refacciones')
+    const usuario = userEvent.setup({ delay: null })
+
+    await usuario.click(await screen.findByRole('button', { name: 'Acciones de REF-002' }))
+    await usuario.click(screen.getByRole('menuitem', { name: 'Ver recepciones' }))
+
+    const dialogo = await screen.findByRole('dialog', { name: 'Recepciones' })
+    expect(await within(dialogo).findByText('No existe la refacción 2')).toBeInTheDocument()
+  })
+
+  it('desde la fila, Inventario registra una recepción con la refacción ya elegida', async () => {
+    conSesion('INVENTARIO')
+    conRefacciones()
+    renderApp('/refacciones')
+    const usuario = userEvent.setup({ delay: null })
+
+    await usuario.click(await screen.findByRole('button', { name: 'Acciones de REF-002' }))
+    await usuario.click(screen.getByRole('menuitem', { name: 'Registrar recepción' }))
+
+    expect(await screen.findByRole('heading', { name: 'Registrar recepción' })).toBeInTheDocument()
+    expect(await screen.findByRole('combobox', { name: 'Refacción' })).toHaveTextContent('REF-002')
+  })
+
+  it('desde la fila, Inventario abre la edición', async () => {
+    conSesion('INVENTARIO')
+    conRefacciones()
+    servidor.use(http.get(`${API}/api/v1/refacciones/1`, () => HttpResponse.json(FILTRO_ACEITE)))
+    renderApp('/refacciones')
+    const usuario = userEvent.setup({ delay: null })
+
+    await usuario.click(await screen.findByRole('button', { name: 'Acciones de REF-001' }))
+    await usuario.click(screen.getByRole('menuitem', { name: 'Editar' }))
+
+    expect(await screen.findByRole('heading', { name: 'Editar refacción' })).toBeInTheDocument()
+    expect(await screen.findByDisplayValue('REF-001')).toBeInTheDocument()
+  })
+
+
+  it('busca por código o descripción y filtra las que no tienen existencia', async () => {
+    conSesion('INVENTARIO')
+    conRefacciones()
+    renderApp('/refacciones')
+    const usuario = userEvent.setup({ delay: null })
+    await screen.findByText('REF-001')
+
+    await usuario.type(screen.getByLabelText('Buscar refacción'), 'filtro')
+    expect(screen.getByText('REF-001')).toBeInTheDocument()
+    expect(screen.getByText('REF-004')).toBeInTheDocument()
+    expect(screen.queryByText('REF-002')).not.toBeInTheDocument()
+
+    await usuario.click(screen.getByRole('combobox', { name: 'Existencia' }))
+    await usuario.click(await screen.findByRole('option', { name: 'Sin existencia' }))
+    expect(screen.getByText('REF-004')).toBeInTheDocument()
+    expect(screen.queryByText('REF-001')).not.toBeInTheDocument()
+
+    await usuario.clear(screen.getByLabelText('Buscar refacción'))
+    await usuario.type(screen.getByLabelText('Buscar refacción'), 'amortiguador')
+    expect(screen.getByText('Ninguna refacción coincide')).toBeInTheDocument()
+  })
 })
 
 describe('Alta y edición de refacciones', () => {
@@ -113,7 +195,7 @@ describe('Alta y edición de refacciones', () => {
       http.get(`${API}/api/v1/refacciones`, () => HttpResponse.json([])),
     )
     renderApp('/refacciones/nueva')
-    const usuario = userEvent.setup()
+    const usuario = userEvent.setup({ delay: null })
 
     expect(screen.queryByLabelText(/Existencia inicial/)).not.toBeInTheDocument()
     await usuario.type(screen.getByLabelText('Código'), 'ref-001')
@@ -136,7 +218,7 @@ describe('Alta y edición de refacciones', () => {
   it('valida montos y mínimo antes de enviar', async () => {
     conSesion('INVENTARIO')
     renderApp('/refacciones/nueva')
-    const usuario = userEvent.setup()
+    const usuario = userEvent.setup({ delay: null })
 
     await usuario.type(screen.getByLabelText('Código'), 'REF-009')
     await usuario.type(screen.getByLabelText('Descripción'), 'Tapón')
@@ -157,7 +239,7 @@ describe('Alta y edición de refacciones', () => {
       ),
     )
     renderApp('/refacciones/nueva')
-    const usuario = userEvent.setup()
+    const usuario = userEvent.setup({ delay: null })
 
     await usuario.type(screen.getByLabelText('Código'), 'REF-001')
     await usuario.type(screen.getByLabelText('Descripción'), 'Filtro de aceite')
@@ -185,7 +267,7 @@ describe('Alta y edición de refacciones', () => {
 
     expect(await screen.findByDisplayValue('REF-002')).toBeInTheDocument()
     expect(screen.getByText('Existencia actual:')).toHaveTextContent('Existencia actual: 3')
-    const usuario = userEvent.setup()
+    const usuario = userEvent.setup({ delay: null })
     await usuario.clear(screen.getByLabelText('Existencia mínima'))
     await usuario.type(screen.getByLabelText('Existencia mínima'), '2')
     await usuario.click(screen.getByRole('button', { name: 'Guardar refacción' }))
@@ -199,4 +281,18 @@ describe('Alta y edición de refacciones', () => {
       minimo: 2,
     })
   })
+
+  it('avisa si no se pudo abrir la refacción a editar', async () => {
+    conSesion('INVENTARIO')
+    servidor.use(
+      http.get(`${API}/api/v1/refacciones/99`, () =>
+        HttpResponse.json({ message: 'No existe la refacción 99' }, { status: 404 }),
+      ),
+    )
+    renderApp('/refacciones/99/editar')
+
+    expect(await screen.findByText('No se pudo abrir la refacción')).toBeInTheDocument()
+    expect(screen.getByText('No existe la refacción 99')).toBeInTheDocument()
+  })
+
 })
