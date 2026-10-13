@@ -3,6 +3,7 @@ import { createElement } from 'react'
 import { MemoryRouter } from 'react-router'
 import type { Rol } from '../api/acceso.ts'
 import { API_URL } from '../api/cliente.ts'
+import { Toaster } from '@/components/ui/sonner'
 import App from '../App.tsx'
 import { guardarSesion } from '../sesion/almacen.ts'
 
@@ -29,9 +30,14 @@ export function conSesion(rol: Rol, segundosParaVencer = 3600): string {
   return token
 }
 
-/** Renderiza la aplicación completa en la ruta indicada. */
+/** Renderiza la aplicación completa en la ruta indicada, con sus avisos (Sonner). */
 export function renderApp(ruta = '/') {
   return render(
-    createElement(MemoryRouter, { initialEntries: [ruta] }, createElement(App)),
+    createElement(
+      MemoryRouter,
+      { initialEntries: [ruta] },
+      createElement(App),
+      createElement(Toaster),
+    ),
   )
 }
