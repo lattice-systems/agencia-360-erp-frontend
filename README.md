@@ -143,43 +143,48 @@ La aplicación queda disponible en `http://localhost:5173`.
 
 **Para iniciar sesión** necesitas el [backend](https://github.com/lattice-systems/agencia-360-backend) corriendo en `http://localhost:8080` (o en la URL de `VITE_API_URL`) y un usuario.
 
-### 👥 Usuarios de ejemplo
+### 👥 Datos de ejemplo
 
-El backend trae un script que crea un usuario por rol. Desde la carpeta del backend:
+El backend trae un juego de datos de ejemplo (TEC-3): un usuario por rol, 8 vehículos, 8 refacciones con sus recepciones y 12 prospectos. Desde la carpeta del backend:
 
 ```bash
-# 1. Levantar la API con el Administrador y el Gerente de marketing iniciales
+# 1. Levantar la base y la API con el Administrador y el Gerente de marketing iniciales
+docker compose up -d
 ADMIN_INICIAL_USUARIO=admin ADMIN_INICIAL_CONTRASENA=Admin12345 \
 GERENTE_INICIAL_USUARIO=gerente GERENTE_INICIAL_CONTRASENA=Gerente12345 \
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 
-# 2. En otra terminal, crear los demás usuarios
-./scripts/usuarios-de-ejemplo.sh
+# 2. En otra terminal, cargar los datos (se puede correr varias veces sin duplicar)
+./scripts/cargar-datos-de-ejemplo.sh
+
+# Para empezar de cero: ./scripts/limpiar-datos.sh y reiniciar la API
 ```
 
 > [!WARNING]
 > **Solo para desarrollo local.** Estas contraseñas son públicas: nunca las uses en un ambiente real.
 
-Usuarios que entran al ERP y lo que ve cada uno en el menú lateral:
+Usuarios que entran al ERP y lo que ve cada uno con los datos cargados:
 
-| Usuario | Contraseña | Rol | Qué puede probar |
+| Usuario | Contraseña | Rol | Qué debe ver |
 | --- | --- | --- | --- |
-| `admin` | `Admin12345` | Administrador | **Usuarios**; consulta de **Vehículos** y **Refacciones** (sin dar de alta ni editar) |
-| `inventario1` | `Inventario123` | Inventario | **Vehículos**, **Refacciones** y **Recepciones**: alta, edición y registro de entradas |
-| `refacciones1` | `Refacciones123` | Refacciones | **Refacciones**: consulta del stock, aviso de las que hay que resurtir e historial de recepciones |
+| `inventario1` | `Inventario123` | Inventario | **Vehículos** (8: 6 disponibles y 2 no disponibles), **Refacciones** y **Recepciones**, con alta, edición y registro de entradas |
+| `refacciones1` | `Refacciones123` | Refacciones | **Refacciones**: el aviso "4 refacciones llegaron a su existencia mínima" y el historial de recepciones. `REF-002` aparece como "Registrada después" |
+| `admin` | `Admin12345` | Administrador | **Usuarios**; **Vehículos** y **Refacciones** solo para consultar |
 | `facturacion1` | `Facturacion123` | Facturación | Inicio sin módulos (sus historias llegan después) |
 | `servicio1` | `Servicio123` | Servicio | Inicio sin módulos |
 | `caja1` | `Caja12345` | Caja | Inicio sin módulos |
 | `contabilidad1` | `Contabilidad123` | Contabilidad | Inicio sin módulos |
 
-`gerente`, `vendedor1` y `vendedor2` son del CRM: su rol no entra al ERP, así que el login responde «Tu rol no tiene acceso al ERP». La lista completa está en el README del backend (sección 5.6).
+`gerente`, `vendedor1` y `vendedor2` son del CRM: su rol no entra al ERP, así que el login responde «Tu rol no tiene acceso al ERP».
+
+Qué contiene cada dato y qué demuestra está en `docs/datos-de-ejemplo.md` del backend; cómo cargar, verificar y limpiar, en su README (sección 5.6).
 
 Para probar el inventario de punta a punta:
-1. Entra con `inventario1`, agrega una refacción y regístrale una recepción.
-2. Entra con `refacciones1` y revisa el aviso de "por resurtir" y el historial con sus dos fechas.
+1. Entra con `inventario1` y registra una recepción de `REF-004` (Filtro de aire), que está sin existencia.
+2. Entra con `refacciones1` y revisa cómo cambió su estado y su historial.
 
 > [!TIP]
-> Si también tienes el CRM corriendo, Vite usa el siguiente puerto libre (`5174`) y lo indica en la terminal. En ese caso, levanta el backend con `CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174`; si no, el login funciona pero las demás pantallas dicen "No se pudo conectar con el servidor".
+> Si también tienes el CRM corriendo, Vite usa el siguiente puerto libre (`5174`) y lo indica en la terminal. Con el perfil `dev`, el backend ya permite `5173` y `5174`. Si el frontend queda en otro puerto, agrégalo con `CORS_ALLOWED_ORIGINS`; si no, el login funciona pero las demás pantallas dicen "No se pudo conectar con el servidor".
 
 ---
 
