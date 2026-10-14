@@ -6,13 +6,13 @@ describe('App', () => {
   it('muestra el inicio de sesión del ERP a quien no ha entrado', () => {
     renderApp('/')
 
-    expect(screen.getByRole('heading', { name: 'Agencia360 ERP' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Iniciar sesión' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Iniciar sesión' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Entrar al ERP' })).toBeInTheDocument()
   })
 
   it('redirige una ruta desconocida al inicio', () => {
     renderApp('/no-existe')
 
-    expect(screen.getByRole('button', { name: 'Iniciar sesión' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Entrar al ERP' })).toBeInTheDocument()
   })
 })

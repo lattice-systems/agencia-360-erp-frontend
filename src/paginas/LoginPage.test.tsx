@@ -16,7 +16,7 @@ async function llenarYEnviar(usuario: string, contrasena: string) {
   const usuarioEvento = userEvent.setup()
   await usuarioEvento.type(screen.getByLabelText('Usuario'), usuario)
   await usuarioEvento.type(screen.getByLabelText('Contraseña'), contrasena)
-  await usuarioEvento.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
+  await usuarioEvento.click(screen.getByRole('button', { name: 'Entrar al ERP' }))
 }
 
 describe('Inicio de sesión', () => {
@@ -78,10 +78,23 @@ describe('Inicio de sesión', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo conectar con el servidor.')
   })
 
+  it('muestra y oculta la contraseña', async () => {
+    renderApp('/login')
+    const usuarioEvento = userEvent.setup()
+    const campo = screen.getByLabelText('Contraseña')
+    expect(campo).toHaveAttribute('type', 'password')
+
+    await usuarioEvento.click(screen.getByRole('button', { name: 'Mostrar contraseña' }))
+    expect(campo).toHaveAttribute('type', 'text')
+
+    await usuarioEvento.click(screen.getByRole('button', { name: 'Ocultar contraseña' }))
+    expect(campo).toHaveAttribute('type', 'password')
+  })
+
   it('pide usuario y contraseña antes de llamar al backend', async () => {
     renderApp('/login')
 
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Iniciar sesión' }))
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Entrar al ERP' }))
 
     expect(screen.getByRole('alert')).toHaveTextContent('Escribe tu usuario y tu contraseña.')
   })

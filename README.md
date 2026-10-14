@@ -106,7 +106,7 @@ Historias del **Product Backlog V2** que corresponden al ERP.
 
 La interfaz sigue la **guía de estilos de Agencia360** (`estilos.pdf`): Azul Agencia `#1D3557` como color principal, turquesa solo como acento, menú lateral izquierdo y componentes de shadcn/ui. Los tokens de color, tipografía y radios están en `src/index.css`. Los componentes se agregan con `npx shadcn@latest add <componente>`; la CLI no es dependencia de la app.
 
-El login y la administración de usuarios todavía usan el CSS anterior (`src/estilos-anteriores.css`, aislado en `.estilo-anterior`). Se migran a shadcn/ui en sus propios PR y después se borra ese archivo.
+Todas las pantallas usan shadcn/ui, incluidos el login y la administración de usuarios (alta y cambio de rol en diálogos). Los logos van como SVG en `public/` (`agencia360-logo.svg`, `agencia360-logo-blanco.svg` y `agencia360-icono.svg`, que también es el favicon); los PNG se conservan para quien no acepte SVG.
 
 La sesión se guarda en `sessionStorage`: se conserva al recargar la página y se borra al cerrar la pestaña o cuando vence el token.
 
@@ -221,8 +221,7 @@ agencia-360-erp-frontend/
 │   ├── test/            # Configuración de pruebas, servidor MSW y utilidades
 │   ├── App.tsx          # Rutas de la aplicación
 │   ├── main.tsx         # Punto de entrada de la aplicación
-│   ├── index.css        # Tema: tokens de la guía de estilos y Tailwind
-│   └── estilos-anteriores.css  # CSS del login y usuarios, hasta migrarlos
+│   └── index.css        # Tema: tokens de la guía de estilos y Tailwind
 ├── components.json      # Configuración de shadcn/ui
 ├── index.html           # HTML base
 ├── eslint.config.js     # Configuración de ESLint
@@ -345,8 +344,6 @@ El detalle de cada check está en [`docs/convenciones-commits.md`](docs/convenci
 | Tema                 | Qué falta                                                   |
 | -------------------- | ----------------------------------------------------------- |
 | Cliente de API       | Generarlo desde el contrato OpenAPI del backend             |
-| Pantallas anteriores | Migrar el login y la administración de usuarios a shadcn/ui |
-| Logos                | Reemplazar los PNG provisionales por los SVG definitivos    |
 | Pruebas              | Instalación y configuración de Playwright                   |
 | Despliegue           | Servicio de Azure y ambientes                               |
 
