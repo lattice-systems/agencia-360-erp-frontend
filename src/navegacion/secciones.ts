@@ -16,6 +16,8 @@ export interface Seccion {
   /** Ícono de Lucide (guía de estilos, sección 7). */
   icono: LucideIcon
   roles: Rol[]
+  /** Páginas dentro de la sección, para las migas de pan (ruta con :parámetros). */
+  subpaginas?: { ruta: string; titulo: string }[]
 }
 
 export const SECCIONES: Seccion[] = [
@@ -27,6 +29,10 @@ export const SECCIONES: Seccion[] = [
     grupo: 'Operación',
     icono: Car,
     roles: ['INVENTARIO', 'ADMINISTRADOR'],
+    subpaginas: [
+      { ruta: '/vehiculos/nuevo', titulo: 'Agregar vehículo' },
+      { ruta: '/vehiculos/:id/editar', titulo: 'Editar vehículo' },
+    ],
   },
   {
     ruta: '/refacciones',
@@ -34,6 +40,10 @@ export const SECCIONES: Seccion[] = [
     grupo: 'Operación',
     icono: Package,
     roles: ['INVENTARIO', 'REFACCIONES', 'ADMINISTRADOR'],
+    subpaginas: [
+      { ruta: '/refacciones/nueva', titulo: 'Agregar refacción' },
+      { ruta: '/refacciones/:id/editar', titulo: 'Editar refacción' },
+    ],
   },
   {
     ruta: '/recepciones',

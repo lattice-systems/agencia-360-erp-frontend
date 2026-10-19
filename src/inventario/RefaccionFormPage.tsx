@@ -140,7 +140,6 @@ function FormularioRefaccion({ refaccion }: { refaccion?: Refaccion }) {
     <section className="flex flex-col gap-6">
       <EncabezadoPagina
         titulo={titulo}
-        migas={[{ texto: 'Refacciones', ruta: '/refacciones' }, { texto: titulo }]}
       />
 
       <form noValidate onSubmit={handleSubmit(guardar)} className="grid gap-6 lg:grid-cols-[1fr_20rem]">

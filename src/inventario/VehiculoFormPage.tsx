@@ -176,7 +176,6 @@ function FormularioVehiculo({ vehiculo }: { vehiculo?: Vehiculo }) {
     <section className="flex flex-col gap-6">
       <EncabezadoPagina
         titulo={titulo}
-        migas={[{ texto: 'Vehículos', ruta: '/vehiculos' }, { texto: titulo }]}
       />
 
       <form
