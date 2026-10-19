@@ -35,19 +35,21 @@ import { textoAPrecio } from './precio.ts'
 
 // Mismas reglas que el backend (Vehiculo.registrar): VIN estándar de 17
 // caracteres sin I, O ni Q; año desde 1900; precio mayor a cero con 2 decimales.
+// En pantalla los campos se nombran como en la factura (ERP-2.2): `modelo` de
+// la API es el Tipo (Sentra) y `anio` es el Modelo (2026).
 const esquema = z.object({
   vin: z
     .string()
     .trim()
     .toUpperCase()
     .regex(/^[A-HJ-NPR-Z0-9]{17}$/, 'Escribe un VIN de 17 caracteres, sin las letras I, O ni Q.'),
-  modelo: z.string().trim().min(1, 'Escribe el modelo.').max(80, 'Usa hasta 80 caracteres.'),
+  modelo: z.string().trim().min(1, 'Escribe el tipo.').max(80, 'Usa hasta 80 caracteres.'),
   version: z.string().trim().min(1, 'Escribe la versión.').max(80, 'Usa hasta 80 caracteres.'),
   anio: z
     .string()
     .trim()
-    .regex(/^\d{4}$/, 'Escribe el año con 4 dígitos.')
-    .refine((valor) => Number(valor) >= 1900, 'El año no es válido.'),
+    .regex(/^\d{4}$/, 'Escribe el modelo con 4 dígitos.')
+    .refine((valor) => Number(valor) >= 1900, 'El modelo no es válido.'),
   color: z.string().trim().min(1, 'Escribe el color.').max(40, 'Usa hasta 40 caracteres.'),
   precio: z
     .string()
@@ -107,7 +109,7 @@ function FormularioVehiculo({ vehiculo }: { vehiculo?: Vehiculo }) {
   const mensajeDeError = useMensajeDeError()
   const [errorApi, setErrorApi] = useState<string | null>(null)
   const edicion = vehiculo !== undefined
-  // Apartada, Vendido y Entregado los pone la venta; Inventario no los cambia.
+  // Vendido y Entregado los pone la venta; Inventario no los cambia.
   const estatusDeVenta =
     vehiculo !== undefined &&
     !(ESTATUS_DE_ENTRADA as readonly string[]).includes(vehiculo.estatus)
@@ -194,13 +196,25 @@ function FormularioVehiculo({ vehiculo }: { vehiculo?: Vehiculo }) {
                   <AlertDescription>{errorApi}</AlertDescription>
                 </Alert>
               )}
-              <Campo control={control} nombre="vin" etiqueta="VIN" mono ayuda="17 caracteres. Verifica que coincida con la unidad." />
+              <Campo
+                control={control}
+                nombre="vin"
+                etiqueta="Número de serie (VIN)"
+                mono
+                ayuda="17 caracteres. Verifica que coincida con la unidad."
+              />
               <div className="grid gap-4 sm:grid-cols-2">
-                <Campo control={control} nombre="modelo" etiqueta="Modelo" />
+                <Campo control={control} nombre="modelo" etiqueta="Tipo" ayuda="Por ejemplo, Sentra." />
                 <Campo control={control} nombre="version" etiqueta="Versión" />
               </div>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <Campo control={control} nombre="anio" etiqueta="Año" inputMode="numeric" />
+                <Campo
+                  control={control}
+                  nombre="anio"
+                  etiqueta="Modelo"
+                  inputMode="numeric"
+                  ayuda="Año del modelo, por ejemplo 2026."
+                />
                 <Campo control={control} nombre="color" etiqueta="Color" />
                 <Campo control={control} nombre="precio" etiqueta="Precio (MXN)" inputMode="decimal" />
                 <Controller
@@ -225,7 +239,7 @@ function FormularioVehiculo({ vehiculo }: { vehiculo?: Vehiculo }) {
                           ))}
                         </SelectContent>
                       </Select>
-                      {estatusDeVenta && <FieldDescription>Este estatus lo cambia Ventas.</FieldDescription>}
+                      {estatusDeVenta && <FieldDescription>Este estatus lo cambia Facturación.</FieldDescription>}
                     </Field>
                   )}
                 />
@@ -241,7 +255,7 @@ function FormularioVehiculo({ vehiculo }: { vehiculo?: Vehiculo }) {
             </CardHeader>
             <CardContent className="flex flex-col gap-4 text-sm text-muted-foreground">
               <p>
-                Verifica el VIN y el precio.{' '}
+                Verifica el número de serie y el precio.{' '}
                 {edicion
                   ? 'Los cambios se verán en el listado al guardar.'
                   : 'La unidad aparecerá en el listado al guardarse.'}

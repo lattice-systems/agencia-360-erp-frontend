@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { servidor } from '../test/servidor.ts'
 import { API, conSesion, renderApp } from '../test/utilidades.ts'
-import { BALATAS_BAJO_MINIMO, KICKS_APARTADA, SENTRA } from './datosDePrueba.ts'
+import { BALATAS_BAJO_MINIMO, KICKS_VENDIDO, SENTRA } from './datosDePrueba.ts'
 
 // Menos de 1024 px: el menú lateral se abre como Sheet y los listados pasan a
 // tarjetas (guía de estilos, sección 6; mockup 12).
@@ -24,7 +24,7 @@ afterEach(() => {
 describe('Inventario en el celular', () => {
   it('muestra cada vehículo como tarjeta, sin tabla', async () => {
     conSesion('INVENTARIO')
-    servidor.use(http.get(`${API}/api/v1/vehiculos`, () => HttpResponse.json([SENTRA, KICKS_APARTADA])))
+    servidor.use(http.get(`${API}/api/v1/vehiculos`, () => HttpResponse.json([SENTRA, KICKS_VENDIDO])))
     renderApp('/vehiculos')
 
     const tarjeta = (await screen.findByText('Sentra Advance')).closest('li')!
@@ -32,6 +32,7 @@ describe('Inventario en el celular', () => {
     expect(within(tarjeta).getByText('3N1AB8CV5PY123456')).toBeInTheDocument()
     expect(within(tarjeta).getByText('$489,900.00 MXN')).toBeInTheDocument()
     expect(within(tarjeta).getByText('Disponible')).toBeInTheDocument()
+    expect(within(tarjeta).getByText('Blanco · Modelo 2026')).toBeInTheDocument()
     expect(within(tarjeta).getByRole('button', { name: 'Acciones de 3N1AB8CV5PY123456' })).toBeInTheDocument()
   })
 
