@@ -1,0 +1,716 @@
+import { Ban, Banknote, Search } from 'lucide-react'
+import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { toast } from 'sonner'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Field, FieldError, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Textarea } from '@/components/ui/textarea'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { formatearFecha, formatearMoneda, hoyIso } from '@/lib/formato'
+import { cn } from '@/lib/utils'
+import { useConsulta, useMensajeDeError } from '../api/useConsulta.ts'
+import { ChipEstado } from '../componentes/ChipEstado.tsx'
+import { EncabezadoPagina } from '../componentes/EncabezadoPagina.tsx'
+import { EstadoVacio } from '../componentes/EstadoVacio.tsx'
+import { TablaCargando } from '../componentes/TablaCargando.tsx'
+import { textoAPrecio } from '../inventario/precio.ts'
+import { useSesion } from '../sesion/useSesion.ts'
+import {
+  enviarPagos,
+  listarLiquidaciones,
+  NOMBRE_ESTADO,
+  NOMBRE_FILTRO,
+  anularPago,
+  rechazarPagos,
+  registrarPago,
+  TONO_ESTADO,
+  validarPagos,
+  type EstadoLiquidacion,
+  type Liquidacion,
+  type PagoRegistrado,
+} from './api.ts'
+
+const TODOS = 'TODOS'
+/** Estados que aparecen en esta pantalla: un validado ya pasó a Facturación. */
+const FILTROS: EstadoLiquidacion[] = ['ABIERTA', 'ENVIADA', 'RECHAZADA']
+
+/**
+ * Pagos de la venta (ERP-1.1, decisión del PO del Sprint 2): Caja registra los
+ * pagos de cada prospecto en Pago y los envía; Contabilidad revisa que
+ * correspondan y cubran la venta, y al validarlos el prospecto pasa a
+ * Facturación.
+ */
+export function PagosPage() {
+  const { sesion } = useSesion()
+  const esCaja = sesion?.rol === 'CAJA'
+  const { datos, cargando, error, recargar, actualizar } = useConsulta(listarLiquidaciones)
+  // Contabilidad empieza en lo que tiene pendiente.
+  const [filtro, setFiltro] = useState<EstadoLiquidacion | typeof TODOS>(esCaja ? TODOS : 'ENVIADA')
+  const [busqueda, setBusqueda] = useState('')
+  const [abiertaId, setAbiertaId] = useState<number | null>(null)
+
+  const liquidaciones = useMemo(() => datos ?? [], [datos])
+  const filtradas = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase()
+    return liquidaciones.filter(
+      (l) =>
+        (filtro === TODOS || l.estado === filtro) &&
+        (!texto || l.prospectoNombre.toLowerCase().includes(texto)),
+    )
+  }, [liquidaciones, filtro, busqueda])
+  const abierta = liquidaciones.find((l) => l.prospectoId === abiertaId) ?? null
+
+  function reemplazar(actualizada: Liquidacion) {
+    actualizar((actuales) =>
+      (actuales ?? []).map((l) => (l.prospectoId === actualizada.prospectoId ? actualizada : l)),
+    )
+  }
+
+  function quitarDeLaLista(prospectoId: number) {
+    setAbiertaId(null)
+    actualizar((actuales) => (actuales ?? []).filter((l) => l.prospectoId !== prospectoId))
+  }
+
+  return (
+    <section className="flex flex-col gap-6">
+      <EncabezadoPagina
+        titulo="Pagos de ventas"
+        descripcion={
+          esCaja
+            ? 'Registra los pagos de cada venta y envíalos a Contabilidad.'
+            : 'Revisa los pagos que envía Caja. Al validarlos, el prospecto pasa a Facturación.'
+        }
+      />
+
+      {error ? (
+        <Alert variant="destructive">
+          <AlertTitle>No se pudieron cargar los pagos</AlertTitle>
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+            {error}
+            <Button variant="outline" onClick={recargar}>
+              Reintentar
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : cargando ? (
+        <TablaCargando />
+      ) : liquidaciones.length === 0 ? (
+        <Card>
+          <EstadoVacio
+            icono={Banknote}
+            titulo="No hay ventas en Pago"
+            descripcion="Aparecen aquí cuando el vendedor pasa un prospecto a la etapa Pago."
+          />
+        </Card>
+      ) : (
+        <>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="buscar-pago">Buscar prospecto</Label>
+              <div className="relative">
+                <Search
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                />
+                <Input
+                  id="buscar-pago"
+                  type="search"
+                  placeholder="Nombre del cliente"
+                  className="pl-9"
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                />
+              </div>
+            </div>
+            <div role="group" aria-label="Filtrar por estado" className="flex flex-wrap gap-2">
+              <ChipFiltro activo={filtro === TODOS} onClick={() => setFiltro(TODOS)}>
+                Todos <span className="tabular-nums">{liquidaciones.length}</span>
+              </ChipFiltro>
+              {FILTROS.map((estado) => (
+                <ChipFiltro key={estado} activo={filtro === estado} onClick={() => setFiltro(estado)}>
+                  {NOMBRE_FILTRO[estado]}{' '}
+                  <span className="tabular-nums">
+                    {liquidaciones.filter((l) => l.estado === estado).length}
+                  </span>
+                </ChipFiltro>
+              ))}
+            </div>
+          </div>
+
+          {filtradas.length === 0 ? (
+            <Card>
+              <EstadoVacio
+                icono={Search}
+                titulo="Ninguna venta coincide"
+                descripcion="Prueba con otro nombre o estado."
+              />
+            </Card>
+          ) : (
+            <ListaLiquidaciones
+              liquidaciones={filtradas}
+              esCaja={esCaja}
+              onAbrir={(l) => setAbiertaId(l.prospectoId)}
+            />
+          )}
+        </>
+      )}
+
+      <DialogoPagos
+        liquidacion={abierta}
+        esCaja={esCaja}
+        onCerrar={() => setAbiertaId(null)}
+        onCambio={reemplazar}
+        onValidada={(l) => {
+          quitarDeLaLista(l.prospectoId)
+          toast.success(`Se validaron los pagos de ${l.prospectoNombre}. Pasó a Facturación.`)
+        }}
+      />
+    </section>
+  )
+}
+
+function ChipFiltro({
+  activo,
+  onClick,
+  children,
+}: {
+  activo: boolean
+  onClick: () => void
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={activo}
+      onClick={onClick}
+      className={cn(
+        'inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-xs font-medium transition-colors',
+        'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none',
+        activo
+          ? 'bg-accent text-primary ring-1 ring-primary/20'
+          : 'bg-card text-muted-foreground ring-1 ring-border hover:text-foreground',
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
+function textoAccion(l: Liquidacion, esCaja: boolean) {
+  if (esCaja) {
+    return l.estado === 'ENVIADA' ? 'Ver pagos' : 'Registrar pagos'
+  }
+  return l.estado === 'ENVIADA' ? 'Revisar pagos' : 'Ver pagos'
+}
+
+function ListaLiquidaciones({
+  liquidaciones,
+  esCaja,
+  onAbrir,
+}: {
+  liquidaciones: Liquidacion[]
+  esCaja: boolean
+  onAbrir: (l: Liquidacion) => void
+}) {
+  const movil = useIsMobile()
+  if (!movil) {
+    return (
+      <Card className="py-0 md:py-0">
+        <Table aria-label="Ventas en Pago">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Prospecto</TableHead>
+              <TableHead>Vendedor</TableHead>
+              <TableHead className="text-right">Pagos</TableHead>
+              <TableHead className="text-right">Total pagado (MXN)</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead>
+                <span className="sr-only">Acciones</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {liquidaciones.map((l) => (
+              <TableRow key={l.prospectoId}>
+                <TableCell className="font-medium">{l.prospectoNombre}</TableCell>
+                <TableCell>{l.vendedorNombre ?? 'Vendedor sin acceso'}</TableCell>
+                <TableCell className="text-right tabular-nums">{l.pagos.length}</TableCell>
+                <TableCell className="text-right tabular-nums">{formatearMoneda(l.total)}</TableCell>
+                <TableCell>
+                  <ChipEstado tono={TONO_ESTADO[l.estado]}>{NOMBRE_ESTADO[l.estado]}</ChipEstado>
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onAbrir(l)}
+                    aria-label={`${textoAccion(l, esCaja)} de ${l.prospectoNombre}`}
+                  >
+                    {textoAccion(l, esCaja)}
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+    )
+  }
+
+  return (
+    <ul aria-label="Ventas en Pago" className="flex flex-col gap-3">
+      {liquidaciones.map((l) => (
+        <li key={l.prospectoId}>
+          <Card className="gap-2 py-4">
+            <div className="flex items-start justify-between gap-2 px-4">
+              <div>
+                <p className="font-semibold">{l.prospectoNombre}</p>
+                <p className="text-sm text-muted-foreground">
+                  {l.vendedorNombre ?? 'Vendedor sin acceso'}
+                </p>
+              </div>
+              <ChipEstado tono={TONO_ESTADO[l.estado]}>{NOMBRE_ESTADO[l.estado]}</ChipEstado>
+            </div>
+            <p className="px-4 text-lg font-semibold tabular-nums">
+              {formatearMoneda(l.total)} MXN
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                {l.pagos.length} {l.pagos.length === 1 ? 'pago' : 'pagos'}
+              </span>
+            </p>
+            <div className="px-4">
+              <Button
+                variant="outline"
+                className="min-h-11 w-full"
+                onClick={() => onAbrir(l)}
+                aria-label={`${textoAccion(l, esCaja)} de ${l.prospectoNombre}`}
+              >
+                {textoAccion(l, esCaja)}
+              </Button>
+            </div>
+          </Card>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+interface PropsDialogo {
+  liquidacion: Liquidacion | null
+  esCaja: boolean
+  onCerrar: () => void
+  onCambio: (l: Liquidacion) => void
+  onValidada: (l: Liquidacion) => void
+}
+
+function DialogoPagos({ liquidacion, esCaja, onCerrar, onCambio, onValidada }: PropsDialogo) {
+  const { sesion } = useSesion()
+  const token = sesion?.token ?? ''
+  const mensajeDeError = useMensajeDeError()
+  const [error, setError] = useState<string | null>(null)
+  const [ocupado, setOcupado] = useState(false)
+  const [rechazando, setRechazando] = useState(false)
+  const [motivo, setMotivo] = useState('')
+  const [errorMotivo, setErrorMotivo] = useState<string | null>(null)
+
+  const editable = esCaja && (liquidacion?.estado === 'ABIERTA' || liquidacion?.estado === 'RECHAZADA')
+  const porRevisar = !esCaja && liquidacion?.estado === 'ENVIADA'
+
+  function cerrar() {
+    setError(null)
+    setRechazando(false)
+    setMotivo('')
+    setErrorMotivo(null)
+    onCerrar()
+  }
+
+  /** @returns si la acción salió bien */
+  async function ejecutar(
+    accion: () => Promise<Liquidacion>,
+    despues: (l: Liquidacion) => void,
+  ): Promise<boolean> {
+    setOcupado(true)
+    setError(null)
+    try {
+      despues(await accion())
+      return true
+    } catch (e) {
+      const mensaje = mensajeDeError(e)
+      if (mensaje !== null) setError(mensaje)
+      return false
+    } finally {
+      setOcupado(false)
+    }
+  }
+
+  if (!liquidacion) {
+    return <Dialog open={false} />
+  }
+  const id = liquidacion.prospectoId
+
+  return (
+    <Dialog open onOpenChange={(abrir) => !abrir && cerrar()}>
+      <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl text-primary">Pagos de la venta</DialogTitle>
+          <DialogDescription>
+            <span className="block text-base font-semibold text-primary">
+              {liquidacion.prospectoNombre}
+            </span>
+            Vendedor: {liquidacion.vendedorNombre ?? 'sin acceso'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-5">
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            Estado
+            <ChipEstado tono={TONO_ESTADO[liquidacion.estado]}>
+              {NOMBRE_ESTADO[liquidacion.estado]}
+            </ChipEstado>
+          </div>
+
+          {liquidacion.estado === 'RECHAZADA' && liquidacion.motivoRechazo && (
+            <Alert variant="destructive">
+              <AlertTitle>Contabilidad regresó los pagos</AlertTitle>
+              <AlertDescription>{liquidacion.motivoRechazo}</AlertDescription>
+            </Alert>
+          )}
+
+          <TablaPagos
+            liquidacion={liquidacion}
+            editable={editable}
+            ocupado={ocupado}
+            onAnular={(pagoId) =>
+              ejecutar(() => anularPago(token, id, pagoId), (l) => {
+                onCambio(l)
+                toast.success('Se anuló el pago. Queda en el registro, pero ya no cuenta en el total.')
+              })
+            }
+          />
+
+          {editable && (
+            <FormularioPago
+              ocupado={ocupado}
+              onRegistrar={(datos) =>
+                ejecutar(() => registrarPago(token, id, datos), (l) => {
+                  onCambio(l)
+                  toast.success(`Se registró el pago de ${formatearMoneda(datos.monto)}.`)
+                })
+              }
+            />
+          )}
+
+          {porRevisar && rechazando && (
+            <Field data-invalid={!!errorMotivo}>
+              <FieldLabel htmlFor="motivo-rechazo">¿Por qué se rechazan?</FieldLabel>
+              <Textarea
+                id="motivo-rechazo"
+                rows={3}
+                maxLength={200}
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                aria-invalid={!!errorMotivo || undefined}
+                aria-describedby={errorMotivo ? 'motivo-rechazo-error' : undefined}
+              />
+              <FieldError
+                id="motivo-rechazo-error"
+                errors={errorMotivo ? [{ message: errorMotivo }] : []}
+              />
+            </Field>
+          )}
+
+          {porRevisar && !rechazando && (
+            <p className="text-sm text-muted-foreground">
+              Revisa que los pagos correspondan a la venta y cubran su precio. Al validarlos, el
+              prospecto pasa a Facturación.
+            </p>
+          )}
+
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={cerrar}>
+            Cerrar
+          </Button>
+          {editable && (
+            <Button
+              disabled={ocupado || liquidacion.pagos.length === 0}
+              onClick={() =>
+                ejecutar(() => enviarPagos(token, id), (l) => {
+                  onCambio(l)
+                  toast.success(`Se enviaron los pagos de ${l.prospectoNombre} a Contabilidad.`)
+                })
+              }
+            >
+              Enviar a Contabilidad
+            </Button>
+          )}
+          {porRevisar &&
+            (rechazando ? (
+              <Button
+                variant="destructive"
+                disabled={ocupado}
+                onClick={() => {
+                  if (!motivo.trim()) {
+                    setErrorMotivo('Escribe por qué se rechazan los pagos.')
+                    return
+                  }
+                  setErrorMotivo(null)
+                  ejecutar(() => rechazarPagos(token, id, motivo.trim()), (l) => {
+                    onCambio(l)
+                    setRechazando(false)
+                    setMotivo('')
+                    toast.success(`Se regresaron los pagos de ${l.prospectoNombre} a Caja.`)
+                  })
+                }}
+              >
+                Confirmar rechazo
+              </Button>
+            ) : (
+              <>
+                <Button variant="outline" disabled={ocupado} onClick={() => setRechazando(true)}>
+                  Rechazar
+                </Button>
+                <Button
+                  disabled={ocupado}
+                  onClick={() => ejecutar(() => validarPagos(token, id), onValidada)}
+                >
+                  Validar pagos
+                </Button>
+              </>
+            ))}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function TablaPagos({
+  liquidacion,
+  editable,
+  ocupado,
+  onAnular,
+}: {
+  liquidacion: Liquidacion
+  editable: boolean
+  ocupado: boolean
+  onAnular: (pagoId: number) => void
+}) {
+  const [porAnular, setPorAnular] = useState<PagoRegistrado | null>(null)
+  if (liquidacion.pagos.length === 0) {
+    return (
+      <p className="rounded-md border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
+        Aún no hay pagos registrados.
+      </p>
+    )
+  }
+  return (
+    <Table aria-label="Pagos registrados">
+      <TableHeader>
+        <TableRow>
+          <TableHead>Fecha</TableHead>
+          <TableHead>Referencia</TableHead>
+          <TableHead>Registró</TableHead>
+          <TableHead className="text-right">Monto (MXN)</TableHead>
+          {editable && (
+            <TableHead>
+              <span className="sr-only">Anular</span>
+            </TableHead>
+          )}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {liquidacion.pagos.map((p) => (
+          <TableRow key={p.id} className={cn(p.anulado && 'text-muted-foreground')}>
+            <TableCell className="whitespace-nowrap">{formatearFecha(p.fechaPago)}</TableCell>
+            <TableCell>
+              <span className="flex flex-wrap items-center gap-2">
+                {p.referencia ?? '—'}
+                {p.anulado && (
+                  <ChipEstado tono="neutro">
+                    Anulado{p.anuladoPorNombre ? ` por ${p.anuladoPorNombre}` : ''}
+                  </ChipEstado>
+                )}
+              </span>
+            </TableCell>
+            <TableCell>{p.registradoPorNombre ?? '—'}</TableCell>
+            <TableCell className={cn('text-right tabular-nums', p.anulado && 'line-through')}>
+              {formatearMoneda(p.monto)}
+            </TableCell>
+            {editable && (
+              <TableCell className="w-12 text-right">
+                {!p.anulado && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={ocupado}
+                    aria-label={`Anular el pago de ${formatearMoneda(p.monto)}`}
+                    onClick={() => setPorAnular(p)}
+                  >
+                    <Ban aria-hidden="true" />
+                  </Button>
+                )}
+              </TableCell>
+            )}
+          </TableRow>
+        ))}
+      </TableBody>
+      <TableFooter>
+        <TableRow>
+          <TableCell colSpan={3} className="font-semibold">
+            Total pagado
+          </TableCell>
+          <TableCell className="text-right font-semibold tabular-nums">
+            {formatearMoneda(liquidacion.total)}
+          </TableCell>
+          {editable && <TableCell />}
+        </TableRow>
+      </TableFooter>
+      <AlertDialog open={porAnular !== null} onOpenChange={(abrir) => !abrir && setPorAnular(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-primary">¿Anular este pago?</AlertDialogTitle>
+            <AlertDialogDescription>
+              El pago de {porAnular ? formatearMoneda(porAnular.monto) : ''} queda en el registro como
+              anulado y deja de contar en el total. No se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (porAnular) onAnular(porAnular.id)
+                setPorAnular(null)
+              }}
+            >
+              Anular pago
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </Table>
+  )
+}
+
+function FormularioPago({
+  ocupado,
+  onRegistrar,
+}: {
+  ocupado: boolean
+  /** @returns si se registró; si falló, se conserva lo capturado */
+  onRegistrar: (datos: {
+    monto: number
+    fechaPago: string
+    referencia: string | null
+  }) => Promise<boolean>
+}) {
+  const [monto, setMonto] = useState('')
+  const [fecha, setFecha] = useState(hoyIso())
+  const [referencia, setReferencia] = useState('')
+  const [errores, setErrores] = useState<{ monto?: string; fecha?: string }>({})
+
+  async function registrar(evento: FormEvent) {
+    evento.preventDefault()
+    const valor = textoAPrecio(monto)
+    const nuevos = {
+      monto: Number.isNaN(valor) || valor <= 0 ? 'Escribe un monto mayor a cero.' : undefined,
+      fecha: !fecha
+        ? 'Elige la fecha del pago.'
+        : fecha > hoyIso()
+          ? 'La fecha del pago no puede ser futura.'
+          : undefined,
+    }
+    setErrores(nuevos)
+    if (nuevos.monto || nuevos.fecha) return
+    if (await onRegistrar({ monto: valor, fechaPago: fecha, referencia: referencia.trim() || null })) {
+      setMonto('')
+      setReferencia('')
+    }
+  }
+
+  return (
+    <form
+      onSubmit={registrar}
+      aria-label="Registrar un pago"
+      className="flex flex-col gap-4 rounded-md border p-4"
+      noValidate
+    >
+      <p className="font-medium">Registrar un pago</p>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Field data-invalid={!!errores.monto}>
+          <FieldLabel htmlFor="monto-pago">Monto (MXN)</FieldLabel>
+          <Input
+            id="monto-pago"
+            inputMode="decimal"
+            placeholder="150,000.00"
+            value={monto}
+            onChange={(e) => setMonto(e.target.value)}
+            aria-invalid={!!errores.monto || undefined}
+            aria-describedby={errores.monto ? 'monto-pago-error' : undefined}
+          />
+          <FieldError id="monto-pago-error" errors={errores.monto ? [{ message: errores.monto }] : []} />
+        </Field>
+        <Field data-invalid={!!errores.fecha}>
+          <FieldLabel htmlFor="fecha-pago">Fecha del pago</FieldLabel>
+          <Input
+            id="fecha-pago"
+            type="date"
+            max={hoyIso()}
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)}
+            aria-invalid={!!errores.fecha || undefined}
+            aria-describedby={errores.fecha ? 'fecha-pago-error' : undefined}
+          />
+          <FieldError id="fecha-pago-error" errors={errores.fecha ? [{ message: errores.fecha }] : []} />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="referencia-pago">Referencia (opcional)</FieldLabel>
+          <Input
+            id="referencia-pago"
+            maxLength={60}
+            placeholder="Folio o recibo"
+            value={referencia}
+            onChange={(e) => setReferencia(e.target.value)}
+          />
+        </Field>
+      </div>
+      <Button type="submit" variant="secondary" className="self-start" disabled={ocupado}>
+        Agregar pago
+      </Button>
+    </form>
+  )
+}
