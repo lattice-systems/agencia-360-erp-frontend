@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react'
+import { http } from 'msw'
 import { createElement } from 'react'
 import { MemoryRouter } from 'react-router'
 import type { Rol } from '../api/acceso.ts'
@@ -6,6 +7,7 @@ import { API_URL } from '../api/cliente.ts'
 import { Toaster } from '@/components/ui/sonner'
 import App from '../App.tsx'
 import { guardarSesion } from '../sesion/almacen.ts'
+import { conexionAbierta, servidor } from './servidor.ts'
 
 export const API = API_URL
 
@@ -40,4 +42,19 @@ export function renderApp(ruta = '/') {
       createElement(Toaster),
     ),
   )
+}
+
+/**
+ * Responde la ruta de Server-Sent Events con una conexión abierta y devuelve
+ * cómo mandar eventos por ella, como lo haría el backend.
+ */
+export function conEventos(ruta: string) {
+  const conexiones: ReadableStreamDefaultController<Uint8Array>[] = []
+  servidor.use(http.get(`${API}${ruta}`, () => conexionAbierta((c) => conexiones.push(c))))
+  return {
+    emitir(evento: string) {
+      const texto = new TextEncoder().encode(`event: ${evento}\ndata: cambio\n\n`)
+      conexiones.forEach((c) => c.enqueue(texto))
+    },
+  }
 }
