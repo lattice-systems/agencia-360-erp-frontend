@@ -1,4 +1,4 @@
-import { Ban, Car, CircleCheck, Ellipsis, Lock, Plus, Search } from 'lucide-react'
+import { Ban, Car, CircleCheck, Ellipsis, Plus, ReceiptText, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -43,6 +43,9 @@ import { NOMBRE_ESTATUS, TONO_ESTATUS } from './estados.ts'
 
 const POR_PAGINA = 10
 const TODOS = 'TODOS'
+// El PO quitó el apartado: la unidad pasa de Disponible a Vendida cuando
+// Facturación la elige. Apartada sigue en la API, pero ya no se ofrece.
+const ESTATUS_DEL_FILTRO = ESTATUS_VEHICULO.filter((valor) => valor !== 'APARTADA')
 
 /** Inventario de vehículos (ERP-2.0): consulta para Inventario y Administrador. */
 export function VehiculosPage() {
@@ -120,7 +123,7 @@ export function VehiculosPage() {
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <TarjetaDato etiqueta="Unidades registradas" valor={vehiculos.length} icono={Car} />
             <TarjetaDato etiqueta="Disponibles" valor={cuenta('DISPONIBLE')} icono={CircleCheck} />
-            <TarjetaDato etiqueta="Apartadas" valor={cuenta('APARTADA')} icono={Lock} />
+            <TarjetaDato etiqueta="Vendidas" valor={cuenta('VENDIDO')} icono={ReceiptText} />
             <TarjetaDato etiqueta="No disponibles" valor={cuenta('NO_DISPONIBLE')} icono={Ban} />
           </div>
 
@@ -135,7 +138,7 @@ export function VehiculosPage() {
                 <Input
                   id="buscar-vehiculo"
                   type="search"
-                  placeholder="VIN, modelo o versión"
+                  placeholder="Número de serie, tipo o versión"
                   className="pl-9"
                   value={busqueda}
                   onChange={(e) => {
@@ -159,7 +162,7 @@ export function VehiculosPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={TODOS}>Todos los estatus</SelectItem>
-                  {ESTATUS_VEHICULO.map((valor) => (
+                  {ESTATUS_DEL_FILTRO.map((valor) => (
                     <SelectItem key={valor} value={valor}>
                       {NOMBRE_ESTATUS[valor]}
                     </SelectItem>
@@ -174,7 +177,7 @@ export function VehiculosPage() {
               <EstadoVacio
                 icono={Search}
                 titulo="Ningún vehículo coincide"
-                descripcion="Prueba con otro VIN, modelo o estatus."
+                descripcion="Prueba con otro número de serie, tipo o estatus."
               />
             </Card>
           ) : (
@@ -208,8 +211,11 @@ function ListaVehiculos({ vehiculos, puedeOperar }: { vehiculos: Vehiculo[]; pue
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Vehículo</TableHead>
-              <TableHead>VIN</TableHead>
+              {/* Nombres de la factura (ERP-2.2): Tipo = `modelo` y Modelo = `anio`. */}
+              <TableHead>Número de serie (VIN)</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Versión</TableHead>
+              <TableHead>Modelo</TableHead>
               <TableHead>Color</TableHead>
               <TableHead className="text-right">Precio (MXN)</TableHead>
               <TableHead>Estatus</TableHead>
@@ -223,13 +229,10 @@ function ListaVehiculos({ vehiculos, puedeOperar }: { vehiculos: Vehiculo[]; pue
           <TableBody>
             {vehiculos.map((v) => (
               <TableRow key={v.id}>
-                <TableCell>
-                  <span className="block font-medium">{v.modelo}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {v.version} · {v.anio}
-                  </span>
-                </TableCell>
                 <TableCell className="font-mono text-sm">{v.vin}</TableCell>
+                <TableCell className="font-medium">{v.modelo}</TableCell>
+                <TableCell>{v.version}</TableCell>
+                <TableCell className="tabular-nums">{v.anio}</TableCell>
                 <TableCell>{v.color}</TableCell>
                 <TableCell className="text-right tabular-nums">{formatearMoneda(v.precio)}</TableCell>
                 <TableCell>
@@ -268,7 +271,7 @@ function ListaVehiculos({ vehiculos, puedeOperar }: { vehiculos: Vehiculo[]; pue
             </p>
             <div className="flex items-center gap-2 px-4 text-sm text-muted-foreground">
               <ChipEstado tono={TONO_ESTATUS[v.estatus]}>{NOMBRE_ESTATUS[v.estatus]}</ChipEstado>
-              {v.color} · {v.anio}
+              {v.color} · Modelo {v.anio}
             </div>
           </Card>
         </li>
