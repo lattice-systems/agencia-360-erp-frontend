@@ -38,7 +38,9 @@ describe('Rutas protegidas y menú por rol', () => {
     conSesion('CAJA')
     renderApp('/')
 
-    await userEvent.setup({ delay: null }).click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    const usuario = userEvent.setup({ delay: null })
+    await usuario.click(screen.getByRole('button', { name: 'Perfil de Persona de Prueba' }))
+    await usuario.click(await screen.findByRole('menuitem', { name: 'Cerrar sesión' }))
 
     expect(screen.getByRole('button', { name: 'Entrar al ERP' })).toBeInTheDocument()
     expect(sessionStorage.length).toBe(0)
