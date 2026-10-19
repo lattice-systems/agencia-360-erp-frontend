@@ -4,9 +4,9 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { servidor } from '../test/servidor.ts'
 import { API, conSesion, renderApp } from '../test/utilidades.ts'
-import { FRONTIER_NO_DISPONIBLE, KICKS_APARTADA, SENTRA } from './datosDePrueba.ts'
+import { FRONTIER_NO_DISPONIBLE, KICKS_VENDIDO, SENTRA } from './datosDePrueba.ts'
 
-function conVehiculos(vehiculos = [SENTRA, KICKS_APARTADA, FRONTIER_NO_DISPONIBLE]) {
+function conVehiculos(vehiculos = [SENTRA, KICKS_VENDIDO, FRONTIER_NO_DISPONIBLE]) {
   servidor.use(http.get(`${API}/api/v1/vehiculos`, () => HttpResponse.json(vehiculos)))
 }
 
@@ -18,10 +18,30 @@ describe('Inventario de vehículos', () => {
 
     const fila = (await screen.findByText('3N1AB8CV5PY123456')).closest('tr')!
     expect(within(fila).getByText('Sentra')).toBeInTheDocument()
-    expect(within(fila).getByText('Advance · 2026')).toBeInTheDocument()
+    expect(within(fila).getByText('Advance')).toBeInTheDocument()
+    expect(within(fila).getByText('2026')).toBeInTheDocument()
     expect(within(fila).getByText('$489,900.00')).toBeInTheDocument()
     expect(within(fila).getByText('Disponible')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Agregar vehículo' })).toHaveAttribute('href', '/vehiculos/nuevo')
+  })
+
+  it('nombra las columnas como la factura: el tipo es la línea y el modelo es el año (ERP-2.2)', async () => {
+    conSesion('INVENTARIO')
+    conVehiculos()
+    renderApp('/vehiculos')
+    await screen.findByText('3N1AB8CV5PY123456')
+
+    const columnas = screen.getAllByRole('columnheader').map((th) => th.textContent)
+    expect(columnas).toEqual([
+      'Número de serie (VIN)',
+      'Tipo',
+      'Versión',
+      'Modelo',
+      'Color',
+      'Precio (MXN)',
+      'Estatus',
+      'Acciones',
+    ])
   })
 
   it('cuenta las unidades por estatus', async () => {
@@ -33,8 +53,10 @@ describe('Inventario de vehículos', () => {
     const tarjeta = (etiqueta: string) => screen.getByText(etiqueta).closest('[data-slot=card]')!
     expect(tarjeta('Unidades registradas')).toHaveTextContent('3')
     expect(tarjeta('Disponibles')).toHaveTextContent('1')
-    expect(tarjeta('Apartadas')).toHaveTextContent('1')
+    expect(tarjeta('Vendidas')).toHaveTextContent('1')
     expect(tarjeta('No disponibles')).toHaveTextContent('1')
+    // El PO quitó el apartado: la unidad pasa de Disponible a Vendida al facturar.
+    expect(screen.queryByText('Apartadas')).not.toBeInTheDocument()
   })
 
   it('el Administrador solo consulta: no ve Agregar ni las acciones de fila', async () => {
@@ -47,12 +69,16 @@ describe('Inventario de vehículos', () => {
     expect(screen.queryByRole('button', { name: /^Acciones de/ })).not.toBeInTheDocument()
   })
 
-  it('busca por VIN, modelo o versión', async () => {
+  it('busca por número de serie, tipo o versión', async () => {
     conSesion('INVENTARIO')
     conVehiculos()
     renderApp('/vehiculos')
     await screen.findByText('3N1AB8CV5PY123456')
 
+    expect(screen.getByLabelText('Buscar vehículo')).toHaveAttribute(
+      'placeholder',
+      'Número de serie, tipo o versión',
+    )
     await userEvent.setup({ delay: null }).type(screen.getByLabelText('Buscar vehículo'), 'kicks')
 
     expect(screen.getByText('3N1CP5CV6RL123458')).toBeInTheDocument()
@@ -68,6 +94,7 @@ describe('Inventario de vehículos', () => {
     const usuario = userEvent.setup({ delay: null })
 
     await usuario.click(screen.getByRole('combobox', { name: 'Estatus' }))
+    expect(screen.queryByRole('option', { name: 'Apartada' })).not.toBeInTheDocument()
     await usuario.click(await screen.findByRole('option', { name: 'No disponible' }))
 
     expect(screen.getByText('3N6AD33A2RK123459')).toBeInTheDocument()

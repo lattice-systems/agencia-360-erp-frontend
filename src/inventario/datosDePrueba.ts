@@ -13,7 +13,7 @@ export const SENTRA: Vehiculo = {
   creadoEn: '2026-10-12T13:00:00Z',
 }
 
-export const KICKS_APARTADA: Vehiculo = {
+export const KICKS_VENDIDO: Vehiculo = {
   id: 3,
   vin: '3N1CP5CV6RL123458',
   modelo: 'Kicks',
@@ -21,7 +21,7 @@ export const KICKS_APARTADA: Vehiculo = {
   anio: 2026,
   color: 'Azul',
   precio: 529900,
-  estatus: 'APARTADA',
+  estatus: 'VENDIDO',
   creadoEn: '2026-10-13T14:00:00Z',
 }
 
