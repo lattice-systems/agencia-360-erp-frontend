@@ -1,4 +1,4 @@
-import { Ban, Car, CircleCheck, Ellipsis, Plus, ReceiptText, Search } from 'lucide-react'
+import { Ban, Car, CircleCheck, Ellipsis, Plus, Radio, ReceiptText, Search, WifiOff } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -31,7 +31,8 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { formatearMoneda } from '@/lib/formato'
 import { deLaPagina } from '@/lib/paginacion'
 import { useConsulta } from '../api/useConsulta.ts'
-import { ChipEstado } from '../componentes/ChipEstado.tsx'
+import { useEnVivo, type EstadoEnVivo } from '../api/useEnVivo.ts'
+import { ChipEstado, type Tono } from '../componentes/ChipEstado.tsx'
 import { EncabezadoPagina } from '../componentes/EncabezadoPagina.tsx'
 import { EstadoVacio } from '../componentes/EstadoVacio.tsx'
 import { Paginacion } from '../componentes/Paginacion.tsx'
@@ -47,11 +48,15 @@ const TODOS = 'TODOS'
 // Facturación la elige. Apartada sigue en la API, pero ya no se ofrece.
 const ESTATUS_DEL_FILTRO = ESTATUS_VEHICULO.filter((valor) => valor !== 'APARTADA')
 
-/** Inventario de vehículos (ERP-2.0): consulta para Inventario y Administrador. */
+/**
+ * Inventario de vehículos (ERP-2.0): consulta para Inventario y Administrador.
+ * Se actualiza solo cuando cambia una unidad (ERP-2.1).
+ */
 export function VehiculosPage() {
   const { sesion } = useSesion()
   const puedeOperar = sesion?.rol === 'INVENTARIO'
-  const { datos, cargando, error, recargar } = useConsulta(listarVehiculos)
+  const { datos, cargando, error, recargar, refrescar } = useConsulta(listarVehiculos)
+  const enVivo = useEnVivo('/api/v1/vehiculos/eventos', 'vehiculos', refrescar)
   const [busqueda, setBusqueda] = useState('')
   const [estatus, setEstatus] = useState<EstatusVehiculo | typeof TODOS>(TODOS)
   const [pagina, setPagina] = useState(1)
@@ -90,7 +95,12 @@ export function VehiculosPage() {
             ? 'Consulta el inventario y registra nuevas unidades.'
             : 'Consulta las unidades del inventario.'
         }
-        accion={agregar}
+        accion={
+          <div className="flex flex-wrap items-center gap-3">
+            <IndicadorEnVivo estado={enVivo} />
+            {agregar}
+          </div>
+        }
       />
 
       {error ? (
@@ -198,6 +208,25 @@ export function VehiculosPage() {
         </>
       )}
     </section>
+  )
+}
+
+const ESTADO_EN_VIVO: Record<EstadoEnVivo, { texto: string; tono: Tono; icono: typeof Radio }> = {
+  conectando: { texto: 'Conectando…', tono: 'neutro', icono: Radio },
+  conectado: { texto: 'En vivo', tono: 'exito', icono: Radio },
+  reconectando: { texto: 'Sin conexión en vivo. Reintentando…', tono: 'advertencia', icono: WifiOff },
+}
+
+/** Dice si la lista se está actualizando sola; los lectores de pantalla lo anuncian. */
+function IndicadorEnVivo({ estado }: { estado: EstadoEnVivo }) {
+  const { texto, tono, icono: Icono } = ESTADO_EN_VIVO[estado]
+  return (
+    <span role="status">
+      <ChipEstado tono={tono}>
+        <Icono aria-hidden="true" className="mr-1 size-3.5" />
+        {texto}
+      </ChipEstado>
+    </span>
   )
 }
 

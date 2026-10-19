@@ -52,12 +52,26 @@ export function useConsulta<T>(consulta: (token: string) => Promise<T>) {
     setVersion((v) => v + 1)
   }, [])
 
+  /**
+   * Vuelve a pedir los datos sin mostrar la carga, por ejemplo cuando llega un
+   * aviso en tiempo real. Si falla, se conservan los datos que ya se veían.
+   */
+  const refrescar = useCallback(() => {
+    consulta(token)
+      .then((datos) => setEstado({ datos, error: null, cargando: false }))
+      .catch((e: unknown) => {
+        if (e instanceof ErrorApi && e.status === 401) {
+          cerrar('expirada')
+        }
+      })
+  }, [consulta, token, cerrar])
+
   /** Reemplaza los datos sin volver a pedirlos, por ejemplo tras guardar. */
   const actualizar = useCallback((cambio: (actuales: T | null) => T) => {
     setEstado((actual) => ({ ...actual, datos: cambio(actual.datos) }))
   }, [])
 
-  return { ...estado, recargar, actualizar }
+  return { ...estado, recargar, refrescar, actualizar }
 }
 
 /**
