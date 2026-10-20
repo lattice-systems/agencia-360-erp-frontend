@@ -1,7 +1,7 @@
 // Secciones del ERP y los roles que pueden entrar a cada una, según la matriz
 // de roles. Cada módulo nuevo del ERP agrega aquí su sección; con eso aparece
 // en el menú lateral y su ruta queda protegida.
-import { Car, ClipboardList, Package, ReceiptText, UserCog, type LucideIcon } from 'lucide-react'
+import { Banknote, Car, ClipboardList, Package, ReceiptText, UserCog, type LucideIcon } from 'lucide-react'
 import type { Rol } from '../api/acceso.ts'
 
 /** Grupos del menú lateral, en el orden en que se muestran. */
@@ -52,8 +52,16 @@ export const SECCIONES: Seccion[] = [
     icono: ClipboardList,
     roles: ['INVENTARIO'],
   },
-  // ERP-1.0: sin apartado, Facturación elige la unidad que se vendió (decisión
-  // del PO del 19 de octubre).
+  // ERP-1.1: Caja registra y envía los pagos de la venta; Contabilidad los
+  // valida y con eso el prospecto pasa a Facturación.
+  {
+    ruta: '/pagos',
+    titulo: 'Pagos de ventas',
+    grupo: 'Operación',
+    icono: Banknote,
+    roles: ['CAJA', 'CONTABILIDAD'],
+  },
+  // ERP-1.0: sin apartado, Facturación elige la unidad que se vendió.
   {
     ruta: '/facturacion',
     titulo: 'Facturación',

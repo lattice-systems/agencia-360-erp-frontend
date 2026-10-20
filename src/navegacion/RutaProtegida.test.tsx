@@ -19,7 +19,7 @@ describe('Rutas protegidas y menú por rol', () => {
   })
 
   it('no muestra Usuarios a otros roles', () => {
-    conSesion('CAJA')
+    conSesion('SERVICIO')
     renderApp('/')
 
     const menu = screen.getByRole('navigation', { name: 'Principal' })

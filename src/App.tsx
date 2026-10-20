@@ -7,6 +7,7 @@ import { VehiculoFormPage } from './inventario/VehiculoFormPage.tsx'
 import { VehiculosPage } from './inventario/VehiculosPage.tsx'
 import { RutaProtegida } from './navegacion/RutaProtegida.tsx'
 import { rolesDe, ROLES_OPERACION_INVENTARIO } from './navegacion/secciones.ts'
+import { PagosPage } from './pagos/PagosPage.tsx'
 import { InicioPage } from './paginas/InicioPage.tsx'
 import { LoginPage } from './paginas/LoginPage.tsx'
 import { UsuariosPage } from './paginas/UsuariosPage.tsx'
@@ -69,6 +70,14 @@ function App() {
             element={
               <RutaProtegida roles={rolesDe('/recepciones')}>
                 <RecepcionPage />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="pagos"
+            element={
+              <RutaProtegida roles={rolesDe('/pagos')}>
+                <PagosPage />
               </RutaProtegida>
             }
           />
