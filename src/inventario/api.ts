@@ -2,9 +2,10 @@
 // las vistas del backend: VehiculoVista, RefaccionVista y RecepcionVista.
 import { peticion } from '../api/cliente.ts'
 
+// Ya no existe Apartada: la unidad pasa a Vendido cuando Facturación la elige
+// (decisión del PO del 19 de octubre).
 export const ESTATUS_VEHICULO = [
   'DISPONIBLE',
-  'APARTADA',
   'VENDIDO',
   'ENTREGADO',
   'NO_DISPONIBLE',
