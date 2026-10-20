@@ -186,6 +186,7 @@ export function PagosPage() {
       )}
 
       <DialogoPagos
+        key={abierta?.prospectoId ?? 'cerrado'}
         liquidacion={abierta}
         esCaja={esCaja}
         onCerrar={() => setAbiertaId(null)}
@@ -341,6 +342,12 @@ function DialogoPagos({ liquidacion, esCaja, onCerrar, onCambio, onValidada }: P
   const [rechazando, setRechazando] = useState(false)
   const [motivo, setMotivo] = useState('')
   const [errorMotivo, setErrorMotivo] = useState<string | null>(null)
+  // Contabilidad revisa el precio contra los catálogos y lo puede corregir
+  // (decisión del PO del 19 de octubre).
+  const [precioTexto, setPrecioTexto] = useState(
+    liquidacion?.precioTotal == null ? '' : liquidacion.precioTotal.toFixed(2),
+  )
+  const [errorPrecio, setErrorPrecio] = useState<string | null>(null)
 
   const editable = esCaja && (liquidacion?.estado === 'ABIERTA' || liquidacion?.estado === 'RECHAZADA')
   const porRevisar = !esCaja && liquidacion?.estado === 'ENVIADA'
@@ -405,6 +412,8 @@ function DialogoPagos({ liquidacion, esCaja, onCerrar, onCambio, onValidada }: P
             </Alert>
           )}
 
+          <PrecioYSaldo liquidacion={liquidacion} />
+
           <TablaPagos
             liquidacion={liquidacion}
             editable={editable}
@@ -449,10 +458,27 @@ function DialogoPagos({ liquidacion, esCaja, onCerrar, onCambio, onValidada }: P
           )}
 
           {porRevisar && !rechazando && (
-            <p className="text-sm text-muted-foreground">
-              Revisa que los pagos correspondan a la venta y cubran su precio. Al validarlos, el
-              prospecto pasa a Facturación.
-            </p>
+            <Field data-invalid={!!errorPrecio}>
+              <FieldLabel htmlFor="precio-validar">Precio total según el catálogo (MXN)</FieldLabel>
+              <Input
+                id="precio-validar"
+                inputMode="decimal"
+                value={precioTexto}
+                onChange={(e) => setPrecioTexto(e.target.value)}
+                aria-invalid={!!errorPrecio || undefined}
+                aria-describedby={
+                  errorPrecio ? 'precio-validar-ayuda precio-validar-error' : 'precio-validar-ayuda'
+                }
+              />
+              <p id="precio-validar-ayuda" className="text-sm text-muted-foreground">
+                Lo capturó el vendedor; corrígelo si no coincide. Los pagos tienen que cubrirlo y, al
+                validarlos, el prospecto pasa a Facturación.
+              </p>
+              <FieldError
+                id="precio-validar-error"
+                errors={errorPrecio ? [{ message: errorPrecio }] : []}
+              />
+            </Field>
           )}
 
           {error && (
@@ -507,7 +533,17 @@ function DialogoPagos({ liquidacion, esCaja, onCerrar, onCambio, onValidada }: P
                 </Button>
                 <Button
                   disabled={ocupado}
-                  onClick={() => ejecutar(() => validarPagos(token, id), onValidada)}
+                  onClick={() => {
+                    const precio = textoAPrecio(precioTexto)
+                    if (Number.isNaN(precio) || precio <= 0) {
+                      setErrorPrecio('Escribe el precio total de la venta.')
+                      return
+                    }
+                    setErrorPrecio(null)
+                    // Solo se manda si Contabilidad lo corrigió o no había.
+                    const corregido = precio === liquidacion.precioTotal ? undefined : precio
+                    ejecutar(() => validarPagos(token, id, corregido), onValidada)
+                  }}
                 >
                   Validar pagos
                 </Button>
@@ -516,6 +552,42 @@ function DialogoPagos({ liquidacion, esCaja, onCerrar, onCambio, onValidada }: P
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+/** Precio total de la venta y cuánto falta por pagar (ERP-1.1). */
+function PrecioYSaldo({ liquidacion }: { liquidacion: Liquidacion }) {
+  if (liquidacion.precioTotal == null) {
+    return (
+      <Alert variant="informacion" role="note">
+        <AlertDescription>
+          Sin precio total: Contabilidad lo captura al validar los pagos.
+        </AlertDescription>
+      </Alert>
+    )
+  }
+  const falta = liquidacion.precioTotal - liquidacion.total
+  return (
+    <dl className="grid grid-cols-2 gap-3 rounded-md border px-4 py-3 text-sm sm:grid-cols-3">
+      <div>
+        <dt className="text-muted-foreground">Precio total</dt>
+        <dd className="font-semibold tabular-nums">{formatearMoneda(liquidacion.precioTotal)}</dd>
+      </div>
+      <div>
+        <dt className="text-muted-foreground">Pagado</dt>
+        <dd className="font-semibold tabular-nums">{formatearMoneda(liquidacion.total)}</dd>
+      </div>
+      <div>
+        <dt className="text-muted-foreground">{falta > 0 ? 'Falta' : 'Saldo'}</dt>
+        <dd className="font-semibold tabular-nums">
+          {falta > 0 ? (
+            formatearMoneda(falta)
+          ) : (
+            <ChipEstado tono="exito">Cubre el precio</ChipEstado>
+          )}
+        </dd>
+      </div>
+    </dl>
   )
 }
 

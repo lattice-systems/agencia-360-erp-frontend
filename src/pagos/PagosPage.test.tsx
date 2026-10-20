@@ -18,6 +18,7 @@ const ANA_SIN_PAGOS: Liquidacion = {
   pagos: [],
   enviadaEn: null,
   motivoRechazo: null,
+  precioTotal: 489900,
 }
 
 const ENGANCHE = {
@@ -40,6 +41,7 @@ const LUIS_ENVIADO: Liquidacion = {
   pagos: [ENGANCHE],
   enviadaEn: '2026-10-15T19:00:00Z',
   motivoRechazo: null,
+  precioTotal: 150000,
 }
 
 const MARTA_RECHAZADA: Liquidacion = {
@@ -51,6 +53,7 @@ const MARTA_RECHAZADA: Liquidacion = {
   pagos: [{ ...ENGANCHE, id: 11 }],
   enviadaEn: '2026-10-15T19:00:00Z',
   motivoRechazo: 'Falta el comprobante del enganche',
+  precioTotal: 489900,
 }
 
 function conLiquidaciones(lista = [ANA_SIN_PAGOS, LUIS_ENVIADO, MARTA_RECHAZADA]) {
@@ -97,6 +100,7 @@ describe('Pagos de ventas · Caja', () => {
     await usuario.click(await screen.findByRole('button', { name: 'Registrar pagos de Ana López' }))
     const dialogo = await screen.findByRole('dialog', { name: 'Pagos de la venta' })
     expect(dialogo).toHaveTextContent('Aún no hay pagos registrados.')
+    expect(dialogo).toHaveTextContent('Falta$489,900.00')
     expect(within(dialogo).getByRole('button', { name: 'Enviar a Contabilidad' })).toBeDisabled()
 
     await usuario.type(within(dialogo).getByLabelText('Monto (MXN)'), '$150,000')
@@ -252,6 +256,61 @@ describe('Pagos de ventas · Contabilidad', () => {
     expect(validado).toBe(true)
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(screen.queryByText('Luis Herrera')).not.toBeInTheDocument()
+  })
+
+  it('ve el precio total y valida sin mandarlo si no lo corrige', async () => {
+    let recibido: unknown = 'sin llamada'
+    conSesion('CONTABILIDAD')
+    conLiquidaciones()
+    servidor.use(
+      http.post(`${URL}/2/validar`, async ({ request }) => {
+        recibido = await request.text()
+        return HttpResponse.json({ ...LUIS_ENVIADO, estado: 'VALIDADA' })
+      }),
+    )
+    renderApp('/pagos')
+    const usuario = userEvent.setup()
+
+    await usuario.click(await screen.findByRole('button', { name: 'Revisar pagos de Luis Herrera' }))
+    const dialogo = await screen.findByRole('dialog', { name: 'Pagos de la venta' })
+    expect(dialogo).toHaveTextContent('Precio total$150,000.00')
+    expect(dialogo).toHaveTextContent('Cubre el precio')
+    expect(within(dialogo).getByLabelText('Precio total según el catálogo (MXN)')).toHaveValue('150000.00')
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Validar pagos' }))
+
+    expect(
+      await screen.findByText('Se validaron los pagos de Luis Herrera. Pasó a Facturación.'),
+    ).toBeInTheDocument()
+    expect(recibido).toBe('')
+  })
+
+  it('corrige el precio total según el catálogo al validar', async () => {
+    let recibido: unknown
+    conSesion('CONTABILIDAD')
+    conLiquidaciones()
+    servidor.use(
+      http.post(`${URL}/2/validar`, async ({ request }) => {
+        recibido = await request.json()
+        return HttpResponse.json({ ...LUIS_ENVIADO, estado: 'VALIDADA', precioTotal: 145000 })
+      }),
+    )
+    renderApp('/pagos')
+    const usuario = userEvent.setup()
+
+    await usuario.click(await screen.findByRole('button', { name: 'Revisar pagos de Luis Herrera' }))
+    const dialogo = await screen.findByRole('dialog', { name: 'Pagos de la venta' })
+    const precio = within(dialogo).getByLabelText('Precio total según el catálogo (MXN)')
+    await usuario.clear(precio)
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Validar pagos' }))
+    expect(within(dialogo).getByText('Escribe el precio total de la venta.')).toBeInTheDocument()
+
+    await usuario.type(precio, '$145,000')
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Validar pagos' }))
+
+    expect(
+      await screen.findByText('Se validaron los pagos de Luis Herrera. Pasó a Facturación.'),
+    ).toBeInTheDocument()
+    expect(recibido).toEqual({ precioTotal: 145000 })
   })
 
   it('rechaza los pagos con un motivo obligatorio', async () => {

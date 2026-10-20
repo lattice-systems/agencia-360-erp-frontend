@@ -52,6 +52,8 @@ export interface Liquidacion {
   pagos: PagoRegistrado[]
   enviadaEn: string | null
   motivoRechazo: string | null
+  /** Lo captura el vendedor al pasar a Pago; Contabilidad lo puede corregir al validar. */
+  precioTotal: number | null
 }
 
 export interface NuevoPago {
@@ -86,8 +88,13 @@ export function enviarPagos(token: string, prospectoId: number) {
   return peticion<Liquidacion>(`${LIQUIDACIONES}/${prospectoId}/enviar`, { metodo: 'POST', token })
 }
 
-export function validarPagos(token: string, prospectoId: number) {
-  return peticion<Liquidacion>(`${LIQUIDACIONES}/${prospectoId}/validar`, { metodo: 'POST', token })
+/** @param precioTotal el precio que corrige Contabilidad; sin él se queda el del vendedor */
+export function validarPagos(token: string, prospectoId: number, precioTotal?: number) {
+  return peticion<Liquidacion>(`${LIQUIDACIONES}/${prospectoId}/validar`, {
+    metodo: 'POST',
+    cuerpo: precioTotal === undefined ? undefined : { precioTotal },
+    token,
+  })
 }
 
 export function rechazarPagos(token: string, prospectoId: number, motivo: string) {
