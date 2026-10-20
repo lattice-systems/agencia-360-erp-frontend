@@ -12,6 +12,7 @@ import { InicioPage } from './paginas/InicioPage.tsx'
 import { LoginPage } from './paginas/LoginPage.tsx'
 import { UsuariosPage } from './paginas/UsuariosPage.tsx'
 import { SesionProvider } from './sesion/SesionProvider.tsx'
+import { FacturacionPage } from './ventas/FacturacionPage.tsx'
 
 function App() {
   return (
@@ -77,6 +78,14 @@ function App() {
             element={
               <RutaProtegida roles={rolesDe('/pagos')}>
                 <PagosPage />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="facturacion"
+            element={
+              <RutaProtegida roles={rolesDe('/facturacion')}>
+                <FacturacionPage />
               </RutaProtegida>
             }
           />

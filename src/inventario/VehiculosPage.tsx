@@ -44,9 +44,6 @@ import { NOMBRE_ESTATUS, TONO_ESTATUS } from './estados.ts'
 
 const POR_PAGINA = 10
 const TODOS = 'TODOS'
-// El PO quitó el apartado: la unidad pasa de Disponible a Vendida cuando
-// Facturación la elige. Apartada sigue en la API, pero ya no se ofrece.
-const ESTATUS_DEL_FILTRO = ESTATUS_VEHICULO.filter((valor) => valor !== 'APARTADA')
 
 /**
  * Inventario de vehículos (ERP-2.0): consulta para Inventario y Administrador.
@@ -172,7 +169,7 @@ export function VehiculosPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={TODOS}>Todos los estatus</SelectItem>
-                  {ESTATUS_DEL_FILTRO.map((valor) => (
+                  {ESTATUS_VEHICULO.map((valor) => (
                     <SelectItem key={valor} value={valor}>
                       {NOMBRE_ESTATUS[valor]}
                     </SelectItem>

@@ -23,6 +23,10 @@ describe('Menú lateral por rol (permisos del PO del 13 de octubre)', () => {
     expect(seccionesDelMenu('REFACCIONES')).toEqual(['Refacciones'])
   })
 
+  it('Facturación elige la unidad de cada venta (ERP-1.0)', () => {
+    expect(seccionesDelMenu('FACTURACION')).toEqual(['Facturación'])
+  })
+
   it('el Administrador consulta el inventario y administra usuarios', () => {
     expect(seccionesDelMenu('ADMINISTRADOR')).toEqual(['Vehículos', 'Refacciones', 'Usuarios'])
   })

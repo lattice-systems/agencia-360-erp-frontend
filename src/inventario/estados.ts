@@ -5,7 +5,6 @@ import type { EstatusVehiculo, Refaccion } from './api.ts'
 
 export const NOMBRE_ESTATUS: Record<EstatusVehiculo, string> = {
   DISPONIBLE: 'Disponible',
-  APARTADA: 'Apartada',
   VENDIDO: 'Vendido',
   ENTREGADO: 'Entregado',
   NO_DISPONIBLE: 'No disponible',
@@ -13,7 +12,6 @@ export const NOMBRE_ESTATUS: Record<EstatusVehiculo, string> = {
 
 export const TONO_ESTATUS: Record<EstatusVehiculo, Tono> = {
   DISPONIBLE: 'exito',
-  APARTADA: 'advertencia',
   VENDIDO: 'informacion',
   ENTREGADO: 'neutro',
   NO_DISPONIBLE: 'peligro',

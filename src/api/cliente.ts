@@ -14,7 +14,7 @@ export class ErrorApi extends Error {
   }
 }
 
-type Metodo = 'GET' | 'POST' | 'PUT'
+type Metodo = 'GET' | 'POST' | 'PUT' | 'PATCH'
 
 interface OpcionesPeticion {
   metodo?: Metodo
