@@ -12,12 +12,12 @@ import { Input } from '@/components/ui/input'
 import { formatearNumero } from '@/lib/formato'
 import { ErrorApi } from '../api/cliente.ts'
 import { useConsulta, useMensajeDeError } from '../api/useConsulta.ts'
-import { ChipEstado } from '../componentes/ChipEstado.tsx'
+import { Badge } from '@/components/ui/badge'
 import { EncabezadoPagina } from '../componentes/EncabezadoPagina.tsx'
 import { TablaCargando } from '../componentes/TablaCargando.tsx'
 import { useSesion } from '../sesion/useSesion.ts'
 import { crearRefaccion, editarRefaccion, obtenerRefaccion, type Refaccion } from './api.ts'
-import { estadoExistencia, NOMBRE_EXISTENCIA, TONO_EXISTENCIA } from './estados.ts'
+import { estadoExistencia, NOMBRE_EXISTENCIA, VARIANTE_EXISTENCIA } from './estados.ts'
 import { textoAPrecio } from './precio.ts'
 
 // Mismas reglas que el backend (Refaccion.registrar). La existencia no se
@@ -145,7 +145,7 @@ function FormularioRefaccion({ refaccion }: { refaccion?: Refaccion }) {
       <form noValidate onSubmit={handleSubmit(guardar)} className="grid gap-6 lg:grid-cols-[1fr_20rem]">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-primary">Información de la refacción</CardTitle>
+            <CardTitle>Información de la refacción</CardTitle>
             <CardDescription>
               {edicion ? 'Corrige los datos del artículo.' : 'Registra el artículo y su existencia mínima.'}
             </CardDescription>
@@ -180,7 +180,7 @@ function FormularioRefaccion({ refaccion }: { refaccion?: Refaccion }) {
         <div className="flex flex-col gap-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-primary">Control de existencias</CardTitle>
+              <CardTitle>Control de existencias</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground">
               {refaccion ? (
@@ -191,9 +191,9 @@ function FormularioRefaccion({ refaccion }: { refaccion?: Refaccion }) {
                       {formatearNumero(refaccion.existencia)}
                     </span>
                   </p>
-                  <ChipEstado tono={TONO_EXISTENCIA[estadoExistencia(refaccion)]}>
+                  <Badge variant={VARIANTE_EXISTENCIA[estadoExistencia(refaccion)]}>
                     {NOMBRE_EXISTENCIA[estadoExistencia(refaccion)]}
-                  </ChipEstado>
+                  </Badge>
                   <p>La existencia no se edita aquí: cambia con cada recepción.</p>
                 </>
               ) : (

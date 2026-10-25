@@ -39,9 +39,15 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { formatearFecha, formatearMoneda, hoyIso } from '@/lib/formato'
 import { cn } from '@/lib/utils'
 import { useConsulta, useMensajeDeError } from '../api/useConsulta.ts'
-import { ChipEstado } from '../componentes/ChipEstado.tsx'
+import { Badge } from '@/components/ui/badge'
 import { EncabezadoPagina } from '../componentes/EncabezadoPagina.tsx'
-import { EstadoVacio } from '../componentes/EstadoVacio.tsx'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { TablaCargando } from '../componentes/TablaCargando.tsx'
 import { textoAPrecio } from '../inventario/precio.ts'
 import { useSesion } from '../sesion/useSesion.ts'
@@ -53,7 +59,7 @@ import {
   anularPago,
   rechazarPagos,
   registrarPago,
-  TONO_ESTADO,
+  VARIANTE_ESTADO,
   validarPagos,
   type EstadoLiquidacion,
   type Liquidacion,
@@ -125,13 +131,15 @@ export function PagosPage() {
       ) : cargando ? (
         <TablaCargando />
       ) : liquidaciones.length === 0 ? (
-        <Card>
-          <EstadoVacio
-            icono={Banknote}
-            titulo="No hay ventas en Pago"
-            descripcion="Aparecen aquí cuando el vendedor pasa un prospecto a la etapa Pago."
-          />
-        </Card>
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon"><Banknote /></EmptyMedia>
+            <EmptyTitle>No hay ventas en Pago</EmptyTitle>
+            <EmptyDescription>
+              Aparecen aquí cuando el vendedor pasa un prospecto a la etapa Pago.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <>
           <div className="flex flex-col gap-4">
@@ -168,13 +176,13 @@ export function PagosPage() {
           </div>
 
           {filtradas.length === 0 ? (
-            <Card>
-              <EstadoVacio
-                icono={Search}
-                titulo="Ninguna venta coincide"
-                descripcion="Prueba con otro nombre o estado."
-              />
-            </Card>
+            <Empty className="border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon"><Search /></EmptyMedia>
+                <EmptyTitle>Ninguna venta coincide</EmptyTitle>
+                <EmptyDescription>Prueba con otro nombre o estado.</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <ListaLiquidaciones
               liquidaciones={filtradas}
@@ -268,7 +276,7 @@ function ListaLiquidaciones({
                 <TableCell className="text-right tabular-nums">{l.pagos.length}</TableCell>
                 <TableCell className="text-right tabular-nums">{formatearMoneda(l.total)}</TableCell>
                 <TableCell>
-                  <ChipEstado tono={TONO_ESTADO[l.estado]}>{NOMBRE_ESTADO[l.estado]}</ChipEstado>
+                  <Badge variant={VARIANTE_ESTADO[l.estado]}>{NOMBRE_ESTADO[l.estado]}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
@@ -300,7 +308,7 @@ function ListaLiquidaciones({
                   {l.vendedorNombre ?? 'Vendedor sin acceso'}
                 </p>
               </div>
-              <ChipEstado tono={TONO_ESTADO[l.estado]}>{NOMBRE_ESTADO[l.estado]}</ChipEstado>
+              <Badge variant={VARIANTE_ESTADO[l.estado]}>{NOMBRE_ESTADO[l.estado]}</Badge>
             </div>
             <p className="px-4 text-lg font-semibold tabular-nums">
               {formatearMoneda(l.total)} MXN
@@ -388,9 +396,9 @@ function DialogoPagos({ liquidacion, esCaja, onCerrar, onCambio, onValidada }: P
     <Dialog open onOpenChange={(abrir) => !abrir && cerrar()}>
       <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-xl text-primary">Pagos de la venta</DialogTitle>
+          <DialogTitle>Pagos de la venta</DialogTitle>
           <DialogDescription>
-            <span className="block text-base font-semibold text-primary">
+            <span className="block font-medium text-foreground">
               {liquidacion.prospectoNombre}
             </span>
             Vendedor: {liquidacion.vendedorNombre ?? 'sin acceso'}
@@ -400,9 +408,9 @@ function DialogoPagos({ liquidacion, esCaja, onCerrar, onCambio, onValidada }: P
         <div className="flex flex-col gap-5">
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             Estado
-            <ChipEstado tono={TONO_ESTADO[liquidacion.estado]}>
+            <Badge variant={VARIANTE_ESTADO[liquidacion.estado]}>
               {NOMBRE_ESTADO[liquidacion.estado]}
-            </ChipEstado>
+            </Badge>
           </div>
 
           {liquidacion.estado === 'RECHAZADA' && liquidacion.motivoRechazo && (
@@ -559,7 +567,7 @@ function DialogoPagos({ liquidacion, esCaja, onCerrar, onCambio, onValidada }: P
 function PrecioYSaldo({ liquidacion }: { liquidacion: Liquidacion }) {
   if (liquidacion.precioTotal == null) {
     return (
-      <Alert variant="informacion" role="note">
+      <Alert role="note">
         <AlertDescription>
           Sin precio total: Contabilidad lo captura al validar los pagos.
         </AlertDescription>
@@ -583,7 +591,7 @@ function PrecioYSaldo({ liquidacion }: { liquidacion: Liquidacion }) {
           {falta > 0 ? (
             formatearMoneda(falta)
           ) : (
-            <ChipEstado tono="exito">Cubre el precio</ChipEstado>
+            <Badge variant="success">Cubre el precio</Badge>
           )}
         </dd>
       </div>
@@ -633,9 +641,9 @@ function TablaPagos({
               <span className="flex flex-wrap items-center gap-2">
                 {p.referencia ?? '—'}
                 {p.anulado && (
-                  <ChipEstado tono="neutro">
+                  <Badge variant="secondary">
                     Anulado{p.anuladoPorNombre ? ` por ${p.anuladoPorNombre}` : ''}
-                  </ChipEstado>
+                  </Badge>
                 )}
               </span>
             </TableCell>
@@ -675,7 +683,7 @@ function TablaPagos({
       <AlertDialog open={porAnular !== null} onOpenChange={(abrir) => !abrir && setPorAnular(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-primary">¿Anular este pago?</AlertDialogTitle>
+            <AlertDialogTitle>¿Anular este pago?</AlertDialogTitle>
             <AlertDialogDescription>
               El pago de {porAnular ? formatearMoneda(porAnular.monto) : ''} queda en el registro como
               anulado y deja de contar en el total. No se puede deshacer.

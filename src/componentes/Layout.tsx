@@ -11,6 +11,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarSeparator,
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar'
@@ -20,11 +21,10 @@ import { GRUPOS, seccionesPara } from '../navegacion/secciones.ts'
 import { useSesion } from '../sesion/useSesion.ts'
 
 /**
- * Estructura de la aplicación: menú lateral izquierdo de 224 px con las
- * secciones del rol (decisión del equipo del 13 de octubre) y barra superior
- * con el control para plegarlo, las migas de pan y el menú de perfil
- * (ERP-UX-1). En pantallas de menos de 1024 px el menú se abre como Sheet
- * desde la izquierda.
+ * Estructura de la aplicación: menú lateral izquierdo con las secciones del
+ * rol y barra superior con el control para plegarlo, las migas de pan y el
+ * menú de perfil (ERP-UX-1). En celulares el menú se abre como Sheet desde la
+ * izquierda.
  */
 export function Layout() {
   const { sesion } = useSesion()
@@ -36,8 +36,8 @@ export function Layout() {
     <SidebarProvider>
       <MenuLateral />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-3 border-b bg-card px-4 md:px-6">
-          <SidebarTrigger className="size-10 shrink-0 border" aria-label="Mostrar u ocultar el menú" />
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 md:px-6">
+          <SidebarTrigger className="-ml-1" aria-label="Mostrar u ocultar el menú" />
           <MigasDePan />
           <div className="ml-auto shrink-0">
             <MenuPerfil />
@@ -62,18 +62,17 @@ function MenuLateral() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="px-4 pt-5 pb-4">
-        {/* 128 px: arriba del mínimo de 120 px de la guía (sección 1). */}
+      <SidebarHeader>
         <Link
           to="/"
           onClick={() => setOpenMobile(false)}
           aria-label="Agencia360, ir a Inicio"
-          className="w-fit rounded-md"
+          className="w-fit rounded-md p-2"
         >
-          <img src="/agencia360-logo-blanco.svg" alt="" className="h-auto w-32" />
+          <img src="/agencia360-logo.svg" alt="" className="h-auto w-32" />
         </Link>
       </SidebarHeader>
-      <div aria-hidden="true" className="mx-4 h-px bg-sidebar-border" />
+      <SidebarSeparator />
       <SidebarContent>
         <nav aria-label="Principal">
           {GRUPOS.map((grupo) => {
@@ -83,9 +82,7 @@ function MenuLateral() {
             }
             return (
               <SidebarGroup key={grupo}>
-                <SidebarGroupLabel className="text-xs font-medium tracking-wide text-sidebar-foreground/75 uppercase">
-                  {grupo}
-                </SidebarGroupLabel>
+                <SidebarGroupLabel>{grupo}</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {delGrupo.map((seccion) => {
@@ -94,11 +91,7 @@ function MenuLateral() {
                       const Icono = seccion.icono
                       return (
                         <SidebarMenuItem key={seccion.ruta}>
-                          <SidebarMenuButton
-                            asChild
-                            isActive={activa}
-                            className="relative h-10 text-sidebar-foreground/75 data-active:before:absolute data-active:before:inset-y-1.5 data-active:before:left-0 data-active:before:w-[3px] data-active:before:rounded-full data-active:before:bg-sidebar-primary [&_svg]:size-5"
-                          >
+                          <SidebarMenuButton asChild isActive={activa}>
                             <Link
                               to={seccion.ruta}
                               aria-current={activa ? 'page' : undefined}

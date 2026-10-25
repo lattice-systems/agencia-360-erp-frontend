@@ -96,15 +96,15 @@ Historias del **Product Backlog V2** que corresponden al ERP.
 | ESLint                         | Análisis estático del código       |
 | React Router                   | Navegación y rutas protegidas por rol |
 | `fetch` (cliente propio)       | Consumo de la API (`src/api/`)     |
-| shadcn/ui (Radix) + Tailwind CSS 4 | Componentes y estilos, con los tokens de la guía de estilos |
+| shadcn/ui (Radix) + Tailwind CSS 4 | Componentes y estilos, con el preset `b1au7YYRG` de shadcn |
 | Lucide (`lucide-react`)        | Íconos                             |
 | react-hook-form + zod          | Formularios y validación           |
-| Inter y JetBrains Mono         | Fuentes locales (`@fontsource-variable`), sin Google Fonts |
+| Noto Sans                      | Fuente local (`@fontsource-variable`), sin Google Fonts |
 | Vitest + React Testing Library | Pruebas unitarias y de componentes |
 | MSW                            | Simulación de la API en las pruebas |
 | GitHub Actions                 | CI, CodeQL y Dependency Review     |
 
-La interfaz sigue la **guía de estilos de Agencia360** (`estilos.pdf`): Azul Agencia `#1D3557` como color principal, turquesa solo como acento, menú lateral izquierdo y componentes de shadcn/ui. Los tokens de color, tipografía y radios están en `src/index.css`. Los componentes se agregan con `npx shadcn@latest add <componente>`; la CLI no es dependencia de la app.
+La interfaz usa **shadcn/ui sin personalizaciones de marca**, con el preset `b1au7YYRG` (estilo `rhea`, tema `blue`, Noto Sans). Los tokens están en `src/index.css`; lo único agregado son `--success` y `--warning` para los estados (variantes `success` y `warning` de `Badge` y `Alert`). Los componentes se agregan con `npx shadcn@latest add <componente>`; el paquete `shadcn` es dependencia de desarrollo porque `src/index.css` importa `shadcn/tailwind.css`.
 
 Todas las pantallas usan shadcn/ui, incluidos el login y la administración de usuarios (alta y cambio de rol en diálogos). Los logos van como SVG en `public/` (`agencia360-logo.svg`, `agencia360-logo-blanco.svg` y `agencia360-icono.svg`, que también es el favicon); los PNG se conservan para quien no acepte SVG.
 
@@ -221,7 +221,7 @@ agencia-360-erp-frontend/
 │   ├── test/            # Configuración de pruebas, servidor MSW y utilidades
 │   ├── App.tsx          # Rutas de la aplicación
 │   ├── main.tsx         # Punto de entrada de la aplicación
-│   └── index.css        # Tema: tokens de la guía de estilos y Tailwind
+│   └── index.css        # Tema: tokens del preset de shadcn y Tailwind
 ├── components.json      # Configuración de shadcn/ui
 ├── index.html           # HTML base
 ├── eslint.config.js     # Configuración de ESLint

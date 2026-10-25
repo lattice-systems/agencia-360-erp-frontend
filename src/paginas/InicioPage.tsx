@@ -14,7 +14,7 @@ export function InicioPage() {
   return (
     <section className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold text-primary">Hola, {sesion.nombre}</h1>
+        <h1 className="text-2xl font-semibold">Hola, {sesion.nombre}</h1>
         <p className="text-sm text-muted-foreground">Rol: {NOMBRE_ROL[sesion.rol]}</p>
       </div>
       {secciones.length > 0 ? (
@@ -26,8 +26,8 @@ export function InicioPage() {
                 <Link to={seccion.ruta} className="block rounded-lg">
                   <Card className="transition-colors hover:bg-accent">
                     <CardHeader>
-                      <Icono aria-hidden="true" className="size-5 text-marca-acento-claro" />
-                      <CardTitle className="text-lg">{seccion.titulo}</CardTitle>
+                      <Icono aria-hidden="true" className="size-5 text-muted-foreground" />
+                      <CardTitle>{seccion.titulo}</CardTitle>
                       <CardDescription>{seccion.grupo}</CardDescription>
                     </CardHeader>
                   </Card>

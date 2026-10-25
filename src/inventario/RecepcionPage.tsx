@@ -20,13 +20,20 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { formatearNumero } from '@/lib/formato'
 import { useConsulta, useMensajeDeError } from '../api/useConsulta.ts'
-import { ChipEstado } from '../componentes/ChipEstado.tsx'
+import { Badge } from '@/components/ui/badge'
 import { EncabezadoPagina } from '../componentes/EncabezadoPagina.tsx'
-import { EstadoVacio } from '../componentes/EstadoVacio.tsx'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { TablaCargando } from '../componentes/TablaCargando.tsx'
 import { useSesion } from '../sesion/useSesion.ts'
 import { listarRefacciones, registrarRecepcion, type Refaccion } from './api.ts'
-import { estadoExistencia, NOMBRE_EXISTENCIA, TONO_EXISTENCIA } from './estados.ts'
+import { estadoExistencia, NOMBRE_EXISTENCIA, VARIANTE_EXISTENCIA } from './estados.ts'
 
 // Decisiones del PO del 13 de octubre: la recepción guarda la fecha en que
 // llegó la mercancía (si no se captura, es la del registro), el proveedor y
@@ -78,18 +85,20 @@ export function RecepcionPage() {
       ) : cargando || !datos ? (
         <TablaCargando />
       ) : datos.length === 0 ? (
-        <Card>
-          <EstadoVacio
-            icono={ClipboardList}
-            titulo="Aún no hay refacciones"
-            descripcion="Primero agrega la refacción; después registra sus entradas aquí."
-            accion={
-              <Button asChild>
-                <Link to="/refacciones/nueva">Agregar refacción</Link>
-              </Button>
-            }
-          />
-        </Card>
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon"><ClipboardList /></EmptyMedia>
+            <EmptyTitle>Aún no hay refacciones</EmptyTitle>
+            <EmptyDescription>
+              Primero agrega la refacción; después registra sus entradas aquí.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild>
+              <Link to="/refacciones/nueva">Agregar refacción</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       ) : (
         <FormularioRecepcion
           refacciones={datos}
@@ -163,7 +172,7 @@ function FormularioRecepcion({ refacciones, onRegistrada }: PropsFormulario) {
     <form noValidate onSubmit={handleSubmit(registrar)} className="grid gap-6 lg:grid-cols-[1fr_20rem]">
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-primary">Datos de la entrada</CardTitle>
+          <CardTitle>Datos de la entrada</CardTitle>
           <CardDescription>La existencia se actualizará cuando confirmes el registro.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -317,7 +326,7 @@ function ResumenRecepcion({ refaccion, cantidadTexto }: { refaccion?: Refaccion;
   return (
     <Card aria-live="polite">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-primary">Resumen de recepción</CardTitle>
+        <CardTitle>Resumen de recepción</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {refaccion ? (
@@ -332,7 +341,7 @@ function ResumenRecepcion({ refaccion, cantidadTexto }: { refaccion?: Refaccion;
               <dt className="text-muted-foreground">Cantidad recibida</dt>
               <dd className="text-right font-semibold tabular-nums">+ {formatearNumero(cantidad)}</dd>
               <dt className="border-t pt-3 font-semibold">Nueva existencia</dt>
-              <dd className="border-t pt-3 text-right text-3xl font-bold text-primary tabular-nums">
+              <dd className="border-t pt-3 text-right text-3xl font-bold tabular-nums">
                 {formatearNumero(refaccion.existencia + cantidad)}
               </dd>
             </dl>
@@ -349,5 +358,5 @@ function ResumenRecepcion({ refaccion, cantidadTexto }: { refaccion?: Refaccion;
 
 function EstadoResultante({ refaccion, existencia }: { refaccion: Refaccion; existencia: number }) {
   const estado = estadoExistencia({ existencia, bajoMinimo: existencia <= refaccion.minimo })
-  return <ChipEstado tono={TONO_EXISTENCIA[estado]}>{NOMBRE_EXISTENCIA[estado]}</ChipEstado>
+  return <Badge variant={VARIANTE_EXISTENCIA[estado]}>{NOMBRE_EXISTENCIA[estado]}</Badge>
 }

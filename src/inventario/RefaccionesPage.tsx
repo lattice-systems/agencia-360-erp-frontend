@@ -31,15 +31,22 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { formatearMoneda, formatearNumero } from '@/lib/formato'
 import { deLaPagina } from '@/lib/paginacion'
 import { useConsulta } from '../api/useConsulta.ts'
-import { ChipEstado } from '../componentes/ChipEstado.tsx'
+import { Badge } from '@/components/ui/badge'
 import { EncabezadoPagina } from '../componentes/EncabezadoPagina.tsx'
-import { EstadoVacio } from '../componentes/EstadoVacio.tsx'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { Paginacion } from '../componentes/Paginacion.tsx'
 import { TablaCargando } from '../componentes/TablaCargando.tsx'
 import { TarjetaDato } from '../componentes/TarjetaDato.tsx'
 import { useSesion } from '../sesion/useSesion.ts'
 import { listarRefacciones, type Refaccion } from './api.ts'
-import { estadoExistencia, NOMBRE_EXISTENCIA, TONO_EXISTENCIA } from './estados.ts'
+import { estadoExistencia, NOMBRE_EXISTENCIA, VARIANTE_EXISTENCIA } from './estados.ts'
 import { HistorialRecepciones } from './HistorialRecepciones.tsx'
 
 const POR_PAGINA = 10
@@ -111,22 +118,22 @@ export function RefaccionesPage() {
       ) : cargando ? (
         <TablaCargando />
       ) : refacciones.length === 0 ? (
-        <Card>
-          <EstadoVacio
-            icono={Package}
-            titulo="Aún no hay refacciones"
-            descripcion={
-              puedeOperar
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon"><Package /></EmptyMedia>
+            <EmptyTitle>Aún no hay refacciones</EmptyTitle>
+            <EmptyDescription>
+              {puedeOperar
                 ? 'Agrega la primera refacción; después registra sus entradas en Recepciones.'
-                : 'Cuando Inventario registre refacciones, aparecerán aquí.'
-            }
-            accion={agregar}
-          />
-        </Card>
+                : 'Cuando Inventario registre refacciones, aparecerán aquí.'}
+            </EmptyDescription>
+          </EmptyHeader>
+          {agregar && <EmptyContent>{agregar}</EmptyContent>}
+        </Empty>
       ) : (
         <>
           {porResurtir > 0 && (
-            <Alert variant="advertencia">
+            <Alert variant="warning">
               <TriangleAlert aria-hidden="true" />
               <AlertTitle>
                 {porResurtir === 1
@@ -187,13 +194,15 @@ export function RefaccionesPage() {
           </div>
 
           {filtradas.length === 0 ? (
-            <Card>
-              <EstadoVacio
-                icono={Search}
-                titulo="Ninguna refacción coincide"
-                descripcion="Prueba con otro código, descripción o existencia."
-              />
-            </Card>
+            <Empty className="border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon"><Search /></EmptyMedia>
+                <EmptyTitle>Ninguna refacción coincide</EmptyTitle>
+                <EmptyDescription>
+                  Prueba con otro código, descripción o existencia.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <>
               <ListaRefacciones
@@ -258,7 +267,7 @@ function ListaRefacciones({ refacciones, puedeOperar, onVerRecepciones }: PropsL
                   <TableCell className="text-right tabular-nums">{formatearNumero(r.existencia)}</TableCell>
                   <TableCell className="text-right tabular-nums">{formatearNumero(r.minimo)}</TableCell>
                   <TableCell>
-                    <ChipEstado tono={TONO_EXISTENCIA[estado]}>{NOMBRE_EXISTENCIA[estado]}</ChipEstado>
+                    <Badge variant={VARIANTE_EXISTENCIA[estado]}>{NOMBRE_EXISTENCIA[estado]}</Badge>
                   </TableCell>
                   <TableCell className="w-12 text-right">
                     <AccionesRefaccion
@@ -304,7 +313,7 @@ function ListaRefacciones({ refacciones, puedeOperar, onVerRecepciones }: PropsL
                 <dd className="text-right tabular-nums">{formatearMoneda(r.precio)}</dd>
               </dl>
               <div className="px-4">
-                <ChipEstado tono={TONO_EXISTENCIA[estado]}>{NOMBRE_EXISTENCIA[estado]}</ChipEstado>
+                <Badge variant={VARIANTE_EXISTENCIA[estado]}>{NOMBRE_EXISTENCIA[estado]}</Badge>
               </div>
             </Card>
           </li>
