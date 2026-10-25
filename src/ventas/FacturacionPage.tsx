@@ -114,7 +114,7 @@ export function FacturacionPage() {
         </Empty>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 @3xl/main:grid-cols-4">
             <TarjetaDato etiqueta="Por facturar" valor={filas.length} icono={ReceiptText} />
             <TarjetaDato etiqueta="Sin unidad" valor={filas.length - conUnidad} icono={CarFront} />
           </div>
@@ -163,9 +163,9 @@ function ListaPorFacturar({ filas, onElegir, onPasarAEntrega }: PropsLista) {
   const movil = useIsMobile()
   if (!movil) {
     return (
-      <Card className="py-0 md:py-0">
+      <div className="overflow-hidden rounded-lg border">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted">
             <TableRow>
               <TableHead>Prospecto</TableHead>
               <TableHead>Vendedor</TableHead>
@@ -201,7 +201,7 @@ function ListaPorFacturar({ filas, onElegir, onPasarAEntrega }: PropsLista) {
             ))}
           </TableBody>
         </Table>
-      </Card>
+      </div>
     )
   }
 

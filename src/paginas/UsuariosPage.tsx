@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -154,23 +155,21 @@ export function UsuariosPage() {
           <div className="grid gap-4 md:grid-cols-[1fr_16rem]">
             <div className="flex flex-col gap-2">
               <Label htmlFor="buscar-usuario">Buscar usuario</Label>
-              <div className="relative">
-                <Search
-                  aria-hidden="true"
-                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
+              <InputGroup>
+                <InputGroupAddon>
+                  <Search aria-hidden="true" />
+                </InputGroupAddon>
+                <InputGroupInput
                   id="buscar-usuario"
                   type="search"
                   placeholder="Nombre o usuario"
-                  className="pl-9"
                   value={busqueda}
                   onChange={(e) => {
                     setBusqueda(e.target.value)
                     setPagina(1)
                   }}
                 />
-              </div>
+              </InputGroup>
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="filtro-rol">Rol</Label>
@@ -273,9 +272,9 @@ function ListaUsuarios({ usuarios, propio, onCambiarRol }: PropsLista) {
 
   if (!movil) {
     return (
-      <Card className="py-0 md:py-0">
+      <div className="overflow-hidden rounded-lg border">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted">
             <TableRow>
               <TableHead>Persona / usuario</TableHead>
               <TableHead>Rol</TableHead>
@@ -299,7 +298,7 @@ function ListaUsuarios({ usuarios, propio, onCambiarRol }: PropsLista) {
             ))}
           </TableBody>
         </Table>
-      </Card>
+      </div>
     )
   }
 

@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -160,23 +160,21 @@ export function RefaccionesPage() {
           <div className="grid gap-4 md:grid-cols-[1fr_16rem]">
             <div className="flex flex-col gap-2">
               <Label htmlFor="buscar-refaccion">Buscar refacción</Label>
-              <div className="relative">
-                <Search
-                  aria-hidden="true"
-                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
+              <InputGroup>
+                <InputGroupAddon>
+                  <Search aria-hidden="true" />
+                </InputGroupAddon>
+                <InputGroupInput
                   id="buscar-refaccion"
                   type="search"
                   placeholder="Código o descripción"
-                  className="pl-9"
                   value={busqueda}
                   onChange={(e) => {
                     setBusqueda(e.target.value)
                     setPagina(1)
                   }}
                 />
-              </div>
+              </InputGroup>
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="filtro-existencia">Existencia</Label>
@@ -239,9 +237,9 @@ function ListaRefacciones({ refacciones, puedeOperar, onVerRecepciones }: PropsL
   if (!movil) {
     return (
       // Escritorio: tabla con importes a la derecha
-      <Card className="py-0 md:py-0">
+      <div className="overflow-hidden rounded-lg border">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted">
             <TableRow>
               <TableHead>Código</TableHead>
               <TableHead>Descripción</TableHead>
@@ -281,7 +279,7 @@ function ListaRefacciones({ refacciones, puedeOperar, onVerRecepciones }: PropsL
             })}
           </TableBody>
         </Table>
-      </Card>
+      </div>
     )
   }
 

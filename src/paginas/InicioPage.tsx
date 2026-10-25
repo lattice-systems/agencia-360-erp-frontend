@@ -1,5 +1,12 @@
+import { LayoutGrid } from 'lucide-react'
 import { Link } from 'react-router'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+} from '@/components/ui/empty'
 import { seccionesPara } from '../navegacion/secciones.ts'
 import { NOMBRE_ROL } from '../sesion/roles.ts'
 import { useSesion } from '../sesion/useSesion.ts'
@@ -37,9 +44,14 @@ export function InicioPage() {
           })}
         </ul>
       ) : (
-        <p className="py-12 text-center text-muted-foreground">
-          Todavía no hay módulos disponibles para tu rol.
-        </p>
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <LayoutGrid />
+            </EmptyMedia>
+            <EmptyDescription>Todavía no hay módulos disponibles para tu rol.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
     </section>
   )

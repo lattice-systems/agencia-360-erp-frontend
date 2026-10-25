@@ -86,9 +86,9 @@ function ListaRecepciones({ refaccionId }: { refaccionId: number }) {
     )
   }
   return (
-    <div className="max-h-[60vh] overflow-auto">
+    <div className="max-h-[60vh] overflow-auto rounded-lg border">
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-muted">
           <TableRow>
             <TableHead>Llegada</TableHead>
             <TableHead>Registro</TableHead>

@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -132,7 +132,7 @@ export function VehiculosPage() {
         </Empty>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 @3xl/main:grid-cols-4">
             <TarjetaDato etiqueta="Unidades registradas" valor={vehiculos.length} icono={Car} />
             <TarjetaDato etiqueta="Disponibles" valor={cuenta('DISPONIBLE')} icono={CircleCheck} />
             <TarjetaDato etiqueta="Vendidas" valor={cuenta('VENDIDO')} icono={ReceiptText} />
@@ -142,23 +142,21 @@ export function VehiculosPage() {
           <div className="grid gap-4 md:grid-cols-[1fr_16rem]">
             <div className="flex flex-col gap-2">
               <Label htmlFor="buscar-vehiculo">Buscar vehículo</Label>
-              <div className="relative">
-                <Search
-                  aria-hidden="true"
-                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
+              <InputGroup>
+                <InputGroupAddon>
+                  <Search aria-hidden="true" />
+                </InputGroupAddon>
+                <InputGroupInput
                   id="buscar-vehiculo"
                   type="search"
                   placeholder="Número de serie, tipo o versión"
-                  className="pl-9"
                   value={busqueda}
                   onChange={(e) => {
                     setBusqueda(e.target.value)
                     setPagina(1)
                   }}
                 />
-              </div>
+              </InputGroup>
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="filtro-estatus">Estatus</Label>
@@ -249,9 +247,9 @@ function ListaVehiculos({ vehiculos, puedeOperar }: { vehiculos: Vehiculo[]; pue
   if (!movil) {
     return (
       // Escritorio: tabla
-      <Card className="py-0 md:py-0">
+      <div className="overflow-hidden rounded-lg border">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted">
             <TableRow>
               {/* Nombres de la factura (ERP-2.2): Tipo = `modelo` y Modelo = `anio`. */}
               <TableHead>Número de serie (VIN)</TableHead>
@@ -289,7 +287,7 @@ function ListaVehiculos({ vehiculos, puedeOperar }: { vehiculos: Vehiculo[]; pue
             ))}
           </TableBody>
         </Table>
-      </Card>
+      </div>
     )
   }
 

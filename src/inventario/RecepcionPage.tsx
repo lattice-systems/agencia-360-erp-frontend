@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import {
   Select,
   SelectContent,
@@ -290,19 +291,17 @@ function FormularioRecepcion({ refacciones, onRegistrada }: PropsFormulario) {
             />
             <Field>
               <FieldLabel htmlFor="responsable">Responsable</FieldLabel>
-              <div className="relative">
-                <Input
+              <InputGroup>
+                <InputGroupInput
                   id="responsable"
                   value={sesion?.nombre ?? ''}
                   readOnly
-                  className="bg-muted pr-10 text-muted-foreground"
                   aria-describedby="responsable-ayuda"
                 />
-                <Lock
-                  aria-hidden="true"
-                  className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground"
-                />
-              </div>
+                <InputGroupAddon align="inline-end">
+                  <Lock aria-hidden="true" />
+                </InputGroupAddon>
+              </InputGroup>
               <FieldDescription id="responsable-ayuda">
                 Se registra desde tu sesión y no se puede modificar.
               </FieldDescription>
