@@ -31,9 +31,15 @@ import {
 import { useIsMobile } from '@/hooks/use-mobile'
 import { formatearFechaHora, formatearMoneda } from '@/lib/formato'
 import { useConsulta, useMensajeDeError } from '../api/useConsulta.ts'
-import { ChipEstado } from '../componentes/ChipEstado.tsx'
+import { Badge } from '@/components/ui/badge'
 import { EncabezadoPagina } from '../componentes/EncabezadoPagina.tsx'
-import { EstadoVacio } from '../componentes/EstadoVacio.tsx'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { TablaCargando } from '../componentes/TablaCargando.tsx'
 import { TarjetaDato } from '../componentes/TarjetaDato.tsx'
 import { useSesion } from '../sesion/useSesion.ts'
@@ -99,16 +105,16 @@ export function FacturacionPage() {
       ) : cargando ? (
         <TablaCargando />
       ) : filas.length === 0 ? (
-        <Card>
-          <EstadoVacio
-            icono={ReceiptText}
-            titulo="No hay prospectos por facturar"
-            descripcion="Aparecen aquí cuando Contabilidad valida sus pagos."
-          />
-        </Card>
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon"><ReceiptText /></EmptyMedia>
+            <EmptyTitle>No hay prospectos por facturar</EmptyTitle>
+            <EmptyDescription>Aparecen aquí cuando Contabilidad valida sus pagos.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 @3xl/main:grid-cols-4">
             <TarjetaDato etiqueta="Por facturar" valor={filas.length} icono={ReceiptText} />
             <TarjetaDato etiqueta="Sin unidad" valor={filas.length - conUnidad} icono={CarFront} />
           </div>
@@ -157,9 +163,9 @@ function ListaPorFacturar({ filas, onElegir, onPasarAEntrega }: PropsLista) {
   const movil = useIsMobile()
   if (!movil) {
     return (
-      <Card className="py-0 md:py-0">
+      <div className="overflow-hidden rounded-lg border">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted">
             <TableRow>
               <TableHead>Prospecto</TableHead>
               <TableHead>Vendedor</TableHead>
@@ -195,7 +201,7 @@ function ListaPorFacturar({ filas, onElegir, onPasarAEntrega }: PropsLista) {
             ))}
           </TableBody>
         </Table>
-      </Card>
+      </div>
     )
   }
 
@@ -223,7 +229,7 @@ function ListaPorFacturar({ filas, onElegir, onPasarAEntrega }: PropsLista) {
 
 function Unidad({ venta }: { venta: Venta | undefined }) {
   if (!venta?.vin) {
-    return <ChipEstado tono="advertencia">Sin unidad</ChipEstado>
+    return <Badge variant="warning">Sin unidad</Badge>
   }
   return (
     <div>

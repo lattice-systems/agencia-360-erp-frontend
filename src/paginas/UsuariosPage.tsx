@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -53,9 +54,15 @@ import {
 import { ErrorApi } from '../api/cliente.ts'
 import { useConsulta, useMensajeDeError } from '../api/useConsulta.ts'
 import { CampoContrasena } from '../componentes/CampoContrasena.tsx'
-import { ChipEstado } from '../componentes/ChipEstado.tsx'
+import { Badge } from '@/components/ui/badge'
 import { EncabezadoPagina } from '../componentes/EncabezadoPagina.tsx'
-import { EstadoVacio } from '../componentes/EstadoVacio.tsx'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { Paginacion } from '../componentes/Paginacion.tsx'
 import { TablaCargando } from '../componentes/TablaCargando.tsx'
 import { NOMBRE_ROL } from '../sesion/roles.ts'
@@ -125,7 +132,7 @@ export function UsuariosPage() {
         accion={botonCrear}
       />
 
-      <Alert variant="informacion" role="note">
+      <Alert role="note">
         <Info aria-hidden="true" />
         <AlertTitle>Cada persona tiene un rol</AlertTitle>
         <AlertDescription>Los permisos se aplican según el rol asignado.</AlertDescription>
@@ -148,23 +155,21 @@ export function UsuariosPage() {
           <div className="grid gap-4 md:grid-cols-[1fr_16rem]">
             <div className="flex flex-col gap-2">
               <Label htmlFor="buscar-usuario">Buscar usuario</Label>
-              <div className="relative">
-                <Search
-                  aria-hidden="true"
-                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
+              <InputGroup>
+                <InputGroupAddon>
+                  <Search aria-hidden="true" />
+                </InputGroupAddon>
+                <InputGroupInput
                   id="buscar-usuario"
                   type="search"
                   placeholder="Nombre o usuario"
-                  className="pl-9"
                   value={busqueda}
                   onChange={(e) => {
                     setBusqueda(e.target.value)
                     setPagina(1)
                   }}
                 />
-              </div>
+              </InputGroup>
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="filtro-rol">Rol</Label>
@@ -191,17 +196,21 @@ export function UsuariosPage() {
           </div>
 
           {filtrados.length === 0 ? (
-            <Card>
-              <EstadoVacio
-                icono={usuarios.length === 0 ? Users : Search}
-                titulo={usuarios.length === 0 ? 'Aún no hay usuarios' : 'Ningún usuario coincide'}
-                descripcion={
-                  usuarios.length === 0
+            <Empty className="border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  {usuarios.length === 0 ? <Users /> : <Search />}
+                </EmptyMedia>
+                <EmptyTitle>
+                  {usuarios.length === 0 ? 'Aún no hay usuarios' : 'Ningún usuario coincide'}
+                </EmptyTitle>
+                <EmptyDescription>
+                  {usuarios.length === 0
                     ? 'Crea la primera cuenta para empezar.'
-                    : 'Prueba con otro nombre, usuario o rol.'
-                }
-              />
-            </Card>
+                    : 'Prueba con otro nombre, usuario o rol.'}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <>
               <ListaUsuarios
@@ -255,7 +264,7 @@ interface PropsLista {
 function ListaUsuarios({ usuarios, propio, onCambiarRol }: PropsLista) {
   const movil = useIsMobile()
   const estado = (u: UsuarioApi) => (
-    <ChipEstado tono={u.activo ? 'exito' : 'neutro'}>{u.activo ? 'Activo' : 'Inactivo'}</ChipEstado>
+    <Badge variant={u.activo ? 'success' : 'secondary'}>{u.activo ? 'Activo' : 'Inactivo'}</Badge>
   )
   const acciones = (u: UsuarioApi) => (
     <AccionesUsuario usuario={u} esPropio={u.usuario === propio} onCambiarRol={onCambiarRol} />
@@ -263,9 +272,9 @@ function ListaUsuarios({ usuarios, propio, onCambiarRol }: PropsLista) {
 
   if (!movil) {
     return (
-      <Card className="py-0 md:py-0">
+      <div className="overflow-hidden rounded-lg border">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted">
             <TableRow>
               <TableHead>Persona / usuario</TableHead>
               <TableHead>Rol</TableHead>
@@ -289,7 +298,7 @@ function ListaUsuarios({ usuarios, propio, onCambiarRol }: PropsLista) {
             ))}
           </TableBody>
         </Table>
-      </Card>
+      </div>
     )
   }
 
@@ -410,7 +419,7 @@ function DialogoCrearUsuario({
     <Dialog open={abierto} onOpenChange={(abrir) => !abrir && cerrar()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-xl text-primary">Crear usuario</DialogTitle>
+          <DialogTitle>Crear usuario</DialogTitle>
           <DialogDescription>Asigna el rol con el que trabajará en la agencia.</DialogDescription>
         </DialogHeader>
         <form noValidate onSubmit={handleSubmit(guardar)} className="flex flex-col gap-6">
@@ -579,7 +588,7 @@ function DialogoCambiarRol({
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl text-primary">Cambiar rol</DialogTitle>
+          <DialogTitle>Cambiar rol</DialogTitle>
           <DialogDescription>
             {usuario ? `${usuario.nombre} (${usuario.usuario})` : ''}
           </DialogDescription>

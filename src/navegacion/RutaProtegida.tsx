@@ -1,5 +1,13 @@
+import { ShieldOff } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import type { Rol } from '../api/acceso.ts'
 import { useSesion } from '../sesion/useSesion.ts'
 
@@ -18,10 +26,17 @@ export function RutaProtegida({ children, roles }: Props) {
   }
   if (roles && !roles.includes(sesion.rol)) {
     return (
-      <section className="py-12 text-center">
-        <h1 className="text-2xl font-semibold text-primary">Sin permiso</h1>
-        <p className="text-muted-foreground">Tu rol no tiene acceso a esta sección.</p>
-      </section>
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <ShieldOff />
+          </EmptyMedia>
+          <EmptyTitle>
+            <h1>Sin permiso</h1>
+          </EmptyTitle>
+          <EmptyDescription>Tu rol no tiene acceso a esta sección.</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     )
   }
   return children

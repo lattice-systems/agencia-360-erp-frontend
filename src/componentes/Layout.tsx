@@ -1,7 +1,10 @@
+import type { CSSProperties } from 'react'
 import { Link, Outlet, useLocation } from 'react-router'
+import { Separator } from '@/components/ui/separator'
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -16,15 +19,15 @@ import {
 } from '@/components/ui/sidebar'
 import { MenuPerfil } from '../navegacion/MenuPerfil.tsx'
 import { MigasDePan } from '../navegacion/MigasDePan.tsx'
+import { SelectorTema } from './SelectorTema.tsx'
 import { GRUPOS, seccionesPara } from '../navegacion/secciones.ts'
 import { useSesion } from '../sesion/useSesion.ts'
 
 /**
- * Estructura de la aplicación: menú lateral izquierdo de 224 px con las
- * secciones del rol (decisión del equipo del 13 de octubre) y barra superior
- * con el control para plegarlo, las migas de pan y el menú de perfil
- * (ERP-UX-1). En pantallas de menos de 1024 px el menú se abre como Sheet
- * desde la izquierda.
+ * Estructura de la aplicación (ERP-UX-1), con la forma
+ * del bloque dashboard-01 de shadcn: menú lateral inset que se pliega a
+ * íconos, con el perfil al pie, y barra superior con el control para plegarlo
+ * y las migas de pan. En celulares el menú se abre como Sheet.
  */
 export function Layout() {
   const { sesion } = useSesion()
@@ -33,17 +36,23 @@ export function Layout() {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider
+      style={
+        {
+          '--sidebar-width': 'calc(var(--spacing) * 64)',
+          '--header-height': 'calc(var(--spacing) * 14)',
+        } as CSSProperties
+      }
+    >
       <MenuLateral />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-3 border-b bg-card px-4 md:px-6">
-          <SidebarTrigger className="size-10 shrink-0 border" aria-label="Mostrar u ocultar el menú" />
+        <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b px-4 lg:px-6">
+          <SidebarTrigger className="-ml-1" aria-label="Mostrar u ocultar el menú" />
+          <Separator orientation="vertical" className="mx-2 data-vertical:h-4 data-vertical:self-center" />
           <MigasDePan />
-          <div className="ml-auto shrink-0">
-            <MenuPerfil />
-          </div>
+          <SelectorTema className="ml-auto" />
         </header>
-        <div className="mx-auto w-full max-w-[1200px] flex-1 p-4 md:p-6">
+        <div className="@container/main mx-auto flex w-full max-w-7xl flex-1 flex-col p-4 lg:p-6">
           <Outlet />
         </div>
       </SidebarInset>
@@ -61,19 +70,22 @@ function MenuLateral() {
   const secciones = seccionesPara(sesion.rol)
 
   return (
-    <Sidebar>
-      <SidebarHeader className="px-4 pt-5 pb-4">
-        {/* 128 px: arriba del mínimo de 120 px de la guía (sección 1). */}
-        <Link
-          to="/"
-          onClick={() => setOpenMobile(false)}
-          aria-label="Agencia360, ir a Inicio"
-          className="w-fit rounded-md"
-        >
-          <img src="/agencia360-logo-blanco.svg" alt="" className="h-auto w-32" />
-        </Link>
+    <Sidebar variant="inset" collapsible="icon">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <Link to="/" onClick={() => setOpenMobile(false)} aria-label="Agencia360, ir a Inicio">
+                <img src="/agencia360-icono.svg" alt="" className="size-8 shrink-0" />
+                <div className="grid flex-1 text-left leading-tight">
+                  <span className="truncate font-semibold">Agencia360</span>
+                  <span className="truncate text-xs text-muted-foreground">ERP</span>
+                </div>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
-      <div aria-hidden="true" className="mx-4 h-px bg-sidebar-border" />
       <SidebarContent>
         <nav aria-label="Principal">
           {GRUPOS.map((grupo) => {
@@ -83,9 +95,7 @@ function MenuLateral() {
             }
             return (
               <SidebarGroup key={grupo}>
-                <SidebarGroupLabel className="text-xs font-medium tracking-wide text-sidebar-foreground/75 uppercase">
-                  {grupo}
-                </SidebarGroupLabel>
+                <SidebarGroupLabel>{grupo}</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {delGrupo.map((seccion) => {
@@ -94,11 +104,7 @@ function MenuLateral() {
                       const Icono = seccion.icono
                       return (
                         <SidebarMenuItem key={seccion.ruta}>
-                          <SidebarMenuButton
-                            asChild
-                            isActive={activa}
-                            className="relative h-10 text-sidebar-foreground/75 data-active:before:absolute data-active:before:inset-y-1.5 data-active:before:left-0 data-active:before:w-[3px] data-active:before:rounded-full data-active:before:bg-sidebar-primary [&_svg]:size-5"
-                          >
+                          <SidebarMenuButton asChild isActive={activa} tooltip={seccion.titulo}>
                             <Link
                               to={seccion.ruta}
                               aria-current={activa ? 'page' : undefined}
@@ -118,6 +124,9 @@ function MenuLateral() {
           })}
         </nav>
       </SidebarContent>
+      <SidebarFooter>
+        <MenuPerfil />
+      </SidebarFooter>
     </Sidebar>
   )
 }

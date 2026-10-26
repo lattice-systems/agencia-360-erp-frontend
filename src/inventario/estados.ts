@@ -1,7 +1,10 @@
-// Textos y tonos de los estados del inventario. Cada estado lleva texto, no
-// solo color (guía de estilos, sección 2).
-import type { Tono } from '../componentes/ChipEstado.tsx'
+// Textos y variantes de Badge de los estados del inventario. Cada estado lleva texto, no
+// solo color.
+import type { ComponentProps } from 'react'
+import type { Badge } from '@/components/ui/badge'
 import type { EstatusVehiculo, Refaccion } from './api.ts'
+
+type Variante = ComponentProps<typeof Badge>['variant']
 
 export const NOMBRE_ESTATUS: Record<EstatusVehiculo, string> = {
   DISPONIBLE: 'Disponible',
@@ -10,11 +13,11 @@ export const NOMBRE_ESTATUS: Record<EstatusVehiculo, string> = {
   NO_DISPONIBLE: 'No disponible',
 }
 
-export const TONO_ESTATUS: Record<EstatusVehiculo, Tono> = {
-  DISPONIBLE: 'exito',
-  VENDIDO: 'informacion',
-  ENTREGADO: 'neutro',
-  NO_DISPONIBLE: 'peligro',
+export const VARIANTE_ESTATUS: Record<EstatusVehiculo, Variante> = {
+  DISPONIBLE: 'success',
+  VENDIDO: 'outline',
+  ENTREGADO: 'secondary',
+  NO_DISPONIBLE: 'destructive',
 }
 
 export type EstadoExistencia = 'DISPONIBLE' | 'BAJO_MINIMO' | 'SIN_EXISTENCIA'
@@ -33,8 +36,8 @@ export const NOMBRE_EXISTENCIA: Record<EstadoExistencia, string> = {
   SIN_EXISTENCIA: 'Sin existencia',
 }
 
-export const TONO_EXISTENCIA: Record<EstadoExistencia, Tono> = {
-  DISPONIBLE: 'exito',
-  BAJO_MINIMO: 'advertencia',
-  SIN_EXISTENCIA: 'peligro',
+export const VARIANTE_EXISTENCIA: Record<EstadoExistencia, Variante> = {
+  DISPONIBLE: 'success',
+  BAJO_MINIMO: 'warning',
+  SIN_EXISTENCIA: 'destructive',
 }

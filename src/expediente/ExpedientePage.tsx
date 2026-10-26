@@ -14,10 +14,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useMensajeDeError } from '../api/useConsulta.ts'
 import { EncabezadoPagina } from '../componentes/EncabezadoPagina.tsx'
-import { EstadoVacio } from '../componentes/EstadoVacio.tsx'
 import { TablaCargando } from '../componentes/TablaCargando.tsx'
 import { useSesion } from '../sesion/useSesion.ts'
 import { buscarPorVin, LARGO_MINIMO_BUSQUEDA, nombreDelVehiculo, type VehiculoEncontrado } from './api.ts'
@@ -99,13 +105,17 @@ export function ExpedientePage() {
       ) : buscando ? (
         <TablaCargando />
       ) : resultados === null ? null : resultados.length === 0 ? (
-        <Card>
-          <EstadoVacio
-            icono={FolderSearch}
-            titulo="No hay vehículos con ese VIN"
-            descripcion="Si el cliente es nuevo, pídele al Gerente de marketing que lo registre en el CRM."
-          />
-        </Card>
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <FolderSearch />
+            </EmptyMedia>
+            <EmptyTitle>No hay vehículos con ese VIN</EmptyTitle>
+            <EmptyDescription>
+              Si el cliente es nuevo, pídele al Gerente de marketing que lo registre en el CRM.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <Resultados vehiculos={resultados} />
       )}
@@ -117,9 +127,9 @@ function Resultados({ vehiculos }: { vehiculos: VehiculoEncontrado[] }) {
   const movil = useIsMobile()
   if (!movil) {
     return (
-      <Card className="py-0 md:py-0">
+      <div className="overflow-hidden rounded-lg border">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted">
             <TableRow>
               <TableHead>Número de serie</TableHead>
               <TableHead>Vehículo</TableHead>
@@ -148,7 +158,7 @@ function Resultados({ vehiculos }: { vehiculos: VehiculoEncontrado[] }) {
             ))}
           </TableBody>
         </Table>
-      </Card>
+      </div>
     )
   }
 

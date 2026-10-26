@@ -1,6 +1,6 @@
 import { Ban, Car, CircleCheck, Ellipsis, Plus, Radio, ReceiptText, Search, WifiOff } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { useMemo, useState, type ComponentProps } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -32,15 +32,22 @@ import { formatearMoneda } from '@/lib/formato'
 import { deLaPagina } from '@/lib/paginacion'
 import { useConsulta } from '../api/useConsulta.ts'
 import { useEnVivo, type EstadoEnVivo } from '../api/useEnVivo.ts'
-import { ChipEstado, type Tono } from '../componentes/ChipEstado.tsx'
+import { Badge } from '@/components/ui/badge'
 import { EncabezadoPagina } from '../componentes/EncabezadoPagina.tsx'
-import { EstadoVacio } from '../componentes/EstadoVacio.tsx'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { Paginacion } from '../componentes/Paginacion.tsx'
 import { TablaCargando } from '../componentes/TablaCargando.tsx'
 import { TarjetaDato } from '../componentes/TarjetaDato.tsx'
 import { useSesion } from '../sesion/useSesion.ts'
 import { ESTATUS_VEHICULO, listarVehiculos, type EstatusVehiculo, type Vehiculo } from './api.ts'
-import { NOMBRE_ESTATUS, TONO_ESTATUS } from './estados.ts'
+import { NOMBRE_ESTATUS, VARIANTE_ESTATUS } from './estados.ts'
 
 const POR_PAGINA = 10
 const TODOS = 'TODOS'
@@ -55,7 +62,12 @@ export function VehiculosPage() {
   const { datos, cargando, error, recargar, refrescar } = useConsulta(listarVehiculos)
   const enVivo = useEnVivo('/api/v1/vehiculos/eventos', 'vehiculos', refrescar)
   const [busqueda, setBusqueda] = useState('')
-  const [estatus, setEstatus] = useState<EstatusVehiculo | typeof TODOS>(TODOS)
+  // Inicio enlaza a la lista ya filtrada (?estatus=DISPONIBLE).
+  const [parametros] = useSearchParams()
+  const [estatus, setEstatus] = useState<EstatusVehiculo | typeof TODOS>(() => {
+    const inicial = parametros.get('estatus')
+    return ESTATUS_VEHICULO.find((valor) => valor === inicial) ?? TODOS
+  })
   const [pagina, setPagina] = useState(1)
 
   const vehiculos = useMemo(() => datos ?? [], [datos])
@@ -87,11 +99,9 @@ export function VehiculosPage() {
     <section className="flex flex-col gap-6">
       <EncabezadoPagina
         titulo="Vehículos"
-        descripcion={
-          puedeOperar
-            ? 'Consulta el inventario y registra nuevas unidades.'
-            : 'Consulta las unidades del inventario.'
-        }
+        descripcion={puedeOperar
+        ? 'Consulta el inventario y registra nuevas unidades.'
+        : 'Consulta las unidades del inventario.'}
         accion={
           <div className="flex flex-wrap items-center gap-3">
             <IndicadorEnVivo estado={enVivo} />
@@ -113,21 +123,21 @@ export function VehiculosPage() {
       ) : cargando ? (
         <TablaCargando />
       ) : vehiculos.length === 0 ? (
-        <Card>
-          <EstadoVacio
-            icono={Car}
-            titulo="Aún no hay vehículos"
-            descripcion={
-              puedeOperar
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon"><Car /></EmptyMedia>
+            <EmptyTitle>Aún no hay vehículos</EmptyTitle>
+            <EmptyDescription>
+              {puedeOperar
                 ? 'Registra la primera unidad para empezar.'
-                : 'Cuando Inventario registre unidades, aparecerán aquí.'
-            }
-            accion={agregar}
-          />
-        </Card>
+                : 'Cuando Inventario registre unidades, aparecerán aquí.'}
+            </EmptyDescription>
+          </EmptyHeader>
+          {agregar && <EmptyContent>{agregar}</EmptyContent>}
+        </Empty>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 @3xl/main:grid-cols-4">
             <TarjetaDato etiqueta="Unidades registradas" valor={vehiculos.length} icono={Car} />
             <TarjetaDato etiqueta="Disponibles" valor={cuenta('DISPONIBLE')} icono={CircleCheck} />
             <TarjetaDato etiqueta="Vendidas" valor={cuenta('VENDIDO')} icono={ReceiptText} />
@@ -137,23 +147,21 @@ export function VehiculosPage() {
           <div className="grid gap-4 md:grid-cols-[1fr_16rem]">
             <div className="flex flex-col gap-2">
               <Label htmlFor="buscar-vehiculo">Buscar vehículo</Label>
-              <div className="relative">
-                <Search
-                  aria-hidden="true"
-                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
+              <InputGroup>
+                <InputGroupAddon>
+                  <Search aria-hidden="true" />
+                </InputGroupAddon>
+                <InputGroupInput
                   id="buscar-vehiculo"
                   type="search"
                   placeholder="Número de serie, tipo o versión"
-                  className="pl-9"
                   value={busqueda}
                   onChange={(e) => {
                     setBusqueda(e.target.value)
                     setPagina(1)
                   }}
                 />
-              </div>
+              </InputGroup>
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="filtro-estatus">Estatus</Label>
@@ -180,13 +188,15 @@ export function VehiculosPage() {
           </div>
 
           {filtrados.length === 0 ? (
-            <Card>
-              <EstadoVacio
-                icono={Search}
-                titulo="Ningún vehículo coincide"
-                descripcion="Prueba con otro número de serie, tipo o estatus."
-              />
-            </Card>
+            <Empty className="border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon"><Search /></EmptyMedia>
+                <EmptyTitle>Ningún vehículo coincide</EmptyTitle>
+                <EmptyDescription>
+                  Prueba con otro número de serie, tipo o estatus.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <>
               <ListaVehiculos
@@ -208,21 +218,30 @@ export function VehiculosPage() {
   )
 }
 
-const ESTADO_EN_VIVO: Record<EstadoEnVivo, { texto: string; tono: Tono; icono: typeof Radio }> = {
-  conectando: { texto: 'Conectando…', tono: 'neutro', icono: Radio },
-  conectado: { texto: 'En vivo', tono: 'exito', icono: Radio },
-  reconectando: { texto: 'Sin conexión en vivo. Reintentando…', tono: 'advertencia', icono: WifiOff },
+type Variante = ComponentProps<typeof Badge>['variant']
+
+const ESTADO_EN_VIVO: Record<
+  EstadoEnVivo,
+  { texto: string; variante: Variante; icono: typeof Radio }
+> = {
+  conectando: { texto: 'Conectando…', variante: 'secondary', icono: Radio },
+  conectado: { texto: 'En vivo', variante: 'success', icono: Radio },
+  reconectando: {
+    texto: 'Sin conexión en vivo. Reintentando…',
+    variante: 'warning',
+    icono: WifiOff,
+  },
 }
 
 /** Dice si la lista se está actualizando sola; los lectores de pantalla lo anuncian. */
 function IndicadorEnVivo({ estado }: { estado: EstadoEnVivo }) {
-  const { texto, tono, icono: Icono } = ESTADO_EN_VIVO[estado]
+  const { texto, variante, icono: Icono } = ESTADO_EN_VIVO[estado]
   return (
     <span role="status">
-      <ChipEstado tono={tono}>
-        <Icono aria-hidden="true" className="mr-1 size-3.5" />
+      <Badge variant={variante}>
+        <Icono aria-hidden="true" data-icon="inline-start" />
         {texto}
-      </ChipEstado>
+      </Badge>
     </span>
   )
 }
@@ -233,9 +252,9 @@ function ListaVehiculos({ vehiculos, puedeOperar }: { vehiculos: Vehiculo[]; pue
   if (!movil) {
     return (
       // Escritorio: tabla
-      <Card className="py-0 md:py-0">
+      <div className="overflow-hidden rounded-lg border">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted">
             <TableRow>
               {/* Nombres de la factura (ERP-2.2): Tipo = `modelo` y Modelo = `anio`. */}
               <TableHead>Número de serie (VIN)</TableHead>
@@ -262,7 +281,7 @@ function ListaVehiculos({ vehiculos, puedeOperar }: { vehiculos: Vehiculo[]; pue
                 <TableCell>{v.color}</TableCell>
                 <TableCell className="text-right tabular-nums">{formatearMoneda(v.precio)}</TableCell>
                 <TableCell>
-                  <ChipEstado tono={TONO_ESTATUS[v.estatus]}>{NOMBRE_ESTATUS[v.estatus]}</ChipEstado>
+                  <Badge variant={VARIANTE_ESTATUS[v.estatus]}>{NOMBRE_ESTATUS[v.estatus]}</Badge>
                 </TableCell>
                 {puedeOperar && (
                   <TableCell className="w-12 text-right">
@@ -273,7 +292,7 @@ function ListaVehiculos({ vehiculos, puedeOperar }: { vehiculos: Vehiculo[]; pue
             ))}
           </TableBody>
         </Table>
-      </Card>
+      </div>
     )
   }
 
@@ -296,7 +315,7 @@ function ListaVehiculos({ vehiculos, puedeOperar }: { vehiculos: Vehiculo[]; pue
               {formatearMoneda(v.precio)} MXN
             </p>
             <div className="flex items-center gap-2 px-4 text-sm text-muted-foreground">
-              <ChipEstado tono={TONO_ESTATUS[v.estatus]}>{NOMBRE_ESTATUS[v.estatus]}</ChipEstado>
+              <Badge variant={VARIANTE_ESTATUS[v.estatus]}>{NOMBRE_ESTATUS[v.estatus]}</Badge>
               {v.color} · Modelo {v.anio}
             </div>
           </Card>

@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router'
 import type { Rol } from '../api/acceso.ts'
 import { API_URL } from '../api/cliente.ts'
 import { Toaster } from '@/components/ui/sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import App from '../App.tsx'
 import { guardarSesion } from '../sesion/almacen.ts'
 import { conexionAbierta, servidor } from './servidor.ts'
@@ -38,8 +39,8 @@ export function renderApp(ruta = '/') {
     createElement(
       MemoryRouter,
       { initialEntries: [ruta] },
-      createElement(App),
-      createElement(Toaster),
+      // Igual que en main.tsx: los tooltips del menú lateral necesitan el provider.
+      createElement(TooltipProvider, null, createElement(App), createElement(Toaster)),
     ),
   )
 }

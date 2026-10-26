@@ -18,8 +18,14 @@ import {
 } from '@/components/ui/table'
 import { formatearFechaHora, formatearNumero } from '@/lib/formato'
 import { useConsulta } from '../api/useConsulta.ts'
-import { ChipEstado } from '../componentes/ChipEstado.tsx'
-import { EstadoVacio } from '../componentes/EstadoVacio.tsx'
+import { Badge } from '@/components/ui/badge'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { TablaCargando } from '../componentes/TablaCargando.tsx'
 import { listarRecepciones, type Recepcion, type Refaccion } from './api.ts'
 
@@ -39,7 +45,7 @@ export function HistorialRecepciones({ refaccion, onCerrar }: Props) {
     <Dialog open={refaccion !== null} onOpenChange={(abierto) => !abierto && onCerrar()}>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-primary">Recepciones</DialogTitle>
+          <DialogTitle>Recepciones</DialogTitle>
           <DialogDescription>
             {refaccion && (
               <>
@@ -70,17 +76,19 @@ function ListaRecepciones({ refaccionId }: { refaccionId: number }) {
   }
   if (datos.length === 0) {
     return (
-      <EstadoVacio
-        icono={ClipboardList}
-        titulo="Sin recepciones"
-        descripcion="Esta refacción todavía no tiene entradas registradas."
-      />
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon"><ClipboardList /></EmptyMedia>
+          <EmptyTitle>Sin recepciones</EmptyTitle>
+          <EmptyDescription>Esta refacción todavía no tiene entradas registradas.</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     )
   }
   return (
-    <div className="max-h-[60vh] overflow-auto">
+    <div className="max-h-[60vh] overflow-auto rounded-lg border">
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-muted">
           <TableRow>
             <TableHead>Llegada</TableHead>
             <TableHead>Registro</TableHead>
@@ -96,7 +104,7 @@ function ListaRecepciones({ refaccionId }: { refaccionId: number }) {
               <TableCell>
                 <span className="block">{formatearFechaHora(recepcion.fechaRegistro)}</span>
                 {seRegistroDespues(recepcion) && (
-                  <ChipEstado tono="advertencia">Registrada después</ChipEstado>
+                  <Badge variant="warning">Registrada después</Badge>
                 )}
               </TableCell>
               <TableCell className="text-right tabular-nums">{formatearNumero(recepcion.cantidad)}</TableCell>
