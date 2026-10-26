@@ -104,7 +104,7 @@ Historias del **Product Backlog V2** que corresponden al ERP.
 | MSW                            | Simulación de la API en las pruebas |
 | GitHub Actions                 | CI, CodeQL y Dependency Review     |
 
-La interfaz usa **shadcn/ui con un solo color de marca**, con el preset `b1au7YYRG` (estilo `rhea`, tema `blue`, Noto Sans). Los tokens están en `src/index.css`; lo único propio es el color principal, Azul Agencia `#1D3557` (`--primary` y `--sidebar-primary`), y `--success` y `--warning` para los estados (variantes `success` y `warning` de `Badge` y `Alert`). Los componentes se agregan con `npx shadcn@latest add <componente>`; el paquete `shadcn` es dependencia de desarrollo porque `src/index.css` importa `shadcn/tailwind.css`.
+La interfaz usa **shadcn/ui con un solo color de marca**, con el preset `b1au7YYRG` (estilo `rhea`, tema `blue`, Noto Sans). Los tokens están en `src/index.css`; lo único propio es el color principal, Azul Agencia `#1D3557` (`--primary` y `--sidebar-primary`), el turquesa de marca como acento (`--secondary`, `--accent`, `--sidebar-accent` y `--ring`), y `--success` y `--warning` para los estados (variantes `success` y `warning` de `Badge` y `Alert`). Los componentes se agregan con `npx shadcn@latest add <componente>`; el paquete `shadcn` es dependencia de desarrollo porque `src/index.css` importa `shadcn/tailwind.css`.
 
 Todas las pantallas usan shadcn/ui, incluidos el login y la administración de usuarios (alta y cambio de rol en diálogos). Los logos van como SVG en `public/` (`agencia360-logo.svg`, `agencia360-logo-blanco.svg` y `agencia360-icono.svg`, que también es el favicon); los PNG se conservan para quien no acepte SVG.
 
