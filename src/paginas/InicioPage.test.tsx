@@ -68,6 +68,26 @@ describe('Inicio', () => {
     expect(unidades.getByRole('link', { name: /^Vendidas: 1/ })).toBeInTheDocument()
   })
 
+  it('muestra al Administrador su equipo y el inventario solo en números', async () => {
+    conSesion('ADMINISTRADOR')
+    conInventario()
+    servidor.use(
+      http.get(`${API}/api/v1/usuarios`, () =>
+        HttpResponse.json([
+          { id: 1, usuario: 'caja1', nombre: 'Carla Cajera', rol: 'CAJA', activo: true },
+          { id: 2, usuario: 'vendedor9', nombre: 'Víctor Baja', rol: 'VENTAS', activo: false },
+        ]),
+      ),
+    )
+    renderApp('/')
+
+    expect(await screen.findByText('Tu equipo: 1 persona con acceso')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Administrar usuarios' })).toHaveAttribute('href', '/usuarios')
+    expect(screen.getByRole('link', { name: /Víctor Baja/ })).toBeInTheDocument()
+    expect(indicadores('Inventario').getByRole('link', { name: /^Refacciones bajo mínimo: 2/ })).toBeInTheDocument()
+    expect(screen.queryByText('Balatas delanteras')).not.toBeInTheDocument()
+  })
+
   it('le dice a Refacciones que todo está en orden si nada está bajo su mínimo', async () => {
     conSesion('REFACCIONES')
     servidor.use(http.get(`${API}/api/v1/refacciones`, () => HttpResponse.json([FILTRO_ACEITE])))

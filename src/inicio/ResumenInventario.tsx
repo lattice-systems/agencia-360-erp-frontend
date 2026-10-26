@@ -1,6 +1,5 @@
 import { Package } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import type { Rol } from '../api/acceso.ts'
 import { useConsulta } from '../api/useConsulta.ts'
 import {
   listarRefacciones,
@@ -40,11 +39,11 @@ function plural(n: number, uno: string, varios: string) {
 }
 
 /**
- * Inicio de Inventario y del Administrador (resurtido y unidades) y del rol
- * Refacciones (solo resurtido). Solo Inventario registra recepciones.
+ * Inicio de Inventario (resurtido y unidades) y del rol Refacciones (solo
+ * resurtido). Solo Inventario registra recepciones.
  */
-export function ResumenInventario({ rol }: { rol: Rol }) {
-  const conVehiculos = rol !== 'REFACCIONES'
+export function ResumenInventario({ rol }: { rol: 'INVENTARIO' | 'REFACCIONES' }) {
+  const conVehiculos = rol === 'INVENTARIO'
   const { datos, cargando, error, recargar } = useConsulta(conVehiculos ? cargarTodo : cargarRefacciones)
 
   if (error) {

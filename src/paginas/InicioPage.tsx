@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/empty'
 import type { Rol } from '../api/acceso.ts'
 import { Pendiente } from '../inicio/Pendiente.tsx'
+import { ResumenAdministrador } from '../inicio/ResumenAdministrador.tsx'
 import { ResumenFacturacion } from '../inicio/ResumenFacturacion.tsx'
 import { ResumenInventario } from '../inicio/ResumenInventario.tsx'
 import { ResumenPagos } from '../inicio/ResumenPagos.tsx'
@@ -18,9 +19,10 @@ import { useSesion } from '../sesion/useSesion.ts'
 function ResumenDelRol({ rol }: { rol: Rol }) {
   switch (rol) {
     case 'INVENTARIO':
-    case 'ADMINISTRADOR':
     case 'REFACCIONES':
       return <ResumenInventario rol={rol} />
+    case 'ADMINISTRADOR':
+      return <ResumenAdministrador />
     case 'CAJA':
     case 'CONTABILIDAD':
       return <ResumenPagos rol={rol} />
