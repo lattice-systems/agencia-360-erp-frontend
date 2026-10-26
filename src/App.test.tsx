@@ -7,12 +7,12 @@ describe('App', () => {
     renderApp('/')
 
     expect(screen.getByRole('heading', { name: 'Iniciar sesión' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Entrar al ERP' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Entrar' })).toBeInTheDocument()
   })
 
   it('redirige una ruta desconocida al inicio', () => {
     renderApp('/no-existe')
 
-    expect(screen.getByRole('button', { name: 'Entrar al ERP' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Entrar' })).toBeInTheDocument()
   })
 })

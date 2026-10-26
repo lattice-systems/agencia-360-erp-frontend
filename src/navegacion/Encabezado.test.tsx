@@ -105,7 +105,7 @@ describe('Menú de perfil (ERP-UX-1)', () => {
     expect(within(menu).getByText('Inventario')).toBeInTheDocument()
     await usuario.click(within(menu).getByRole('menuitem', { name: 'Cerrar sesión' }))
 
-    expect(screen.getByRole('button', { name: 'Entrar al ERP' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Entrar' })).toBeInTheDocument()
     expect(sessionStorage.length).toBe(0)
   })
 })

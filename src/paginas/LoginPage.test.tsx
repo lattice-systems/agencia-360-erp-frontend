@@ -16,7 +16,7 @@ async function llenarYEnviar(usuario: string, contrasena: string) {
   const usuarioEvento = userEvent.setup()
   await usuarioEvento.type(screen.getByLabelText('Usuario'), usuario)
   await usuarioEvento.type(screen.getByLabelText('Contraseña'), contrasena)
-  await usuarioEvento.click(screen.getByRole('button', { name: 'Entrar al ERP' }))
+  await usuarioEvento.click(screen.getByRole('button', { name: 'Entrar' }))
 }
 
 describe('Inicio de sesión', () => {
@@ -94,7 +94,7 @@ describe('Inicio de sesión', () => {
   it('pide usuario y contraseña antes de llamar al backend', async () => {
     renderApp('/login')
 
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Entrar al ERP' }))
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Entrar' }))
 
     expect(screen.getByRole('alert')).toHaveTextContent('Escribe tu usuario y tu contraseña.')
   })
