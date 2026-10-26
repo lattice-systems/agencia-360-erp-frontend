@@ -1,5 +1,6 @@
 import { Ban, Banknote, Search } from 'lucide-react'
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
@@ -82,10 +83,14 @@ export function PagosPage() {
   const { sesion } = useSesion()
   const esCaja = sesion?.rol === 'CAJA'
   const { datos, cargando, error, recargar, actualizar } = useConsulta(listarLiquidaciones)
-  // Contabilidad empieza en lo que tiene pendiente.
-  const [filtro, setFiltro] = useState<EstadoLiquidacion | typeof TODOS>(esCaja ? TODOS : 'ENVIADA')
+  // Contabilidad empieza en lo que tiene pendiente. Inicio puede pedir otro
+  // filtro (?filtro=RECHAZADA) o abrir una venta (?venta=12).
+  const [parametros, setParametros] = useSearchParams()
+  const [filtro, setFiltro] = useState<EstadoLiquidacion | typeof TODOS>(
+    () => FILTROS.find((estado) => estado === parametros.get('filtro')) ?? (esCaja ? TODOS : 'ENVIADA'),
+  )
   const [busqueda, setBusqueda] = useState('')
-  const [abiertaId, setAbiertaId] = useState<number | null>(null)
+  const [abiertaId, setAbiertaId] = useState<number | null>(() => Number(parametros.get('venta')) || null)
 
   const liquidaciones = useMemo(() => datos ?? [], [datos])
   const filtradas = useMemo(() => {
@@ -104,8 +109,22 @@ export function PagosPage() {
     )
   }
 
-  function quitarDeLaLista(prospectoId: number) {
+  /** Al cerrar se quita ?venta= para que recargar no la vuelva a abrir. */
+  function cerrarVenta() {
     setAbiertaId(null)
+    if (parametros.has('venta')) {
+      setParametros(
+        (actuales) => {
+          actuales.delete('venta')
+          return actuales
+        },
+        { replace: true },
+      )
+    }
+  }
+
+  function quitarDeLaLista(prospectoId: number) {
+    cerrarVenta()
     actualizar((actuales) => (actuales ?? []).filter((l) => l.prospectoId !== prospectoId))
   }
 
@@ -197,7 +216,7 @@ export function PagosPage() {
         key={abierta?.prospectoId ?? 'cerrado'}
         liquidacion={abierta}
         esCaja={esCaja}
-        onCerrar={() => setAbiertaId(null)}
+        onCerrar={cerrarVenta}
         onCambio={reemplazar}
         onValidada={(l) => {
           quitarDeLaLista(l.prospectoId)

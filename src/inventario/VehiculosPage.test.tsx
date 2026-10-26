@@ -101,6 +101,15 @@ describe('Inventario de vehículos', () => {
     expect(screen.queryByText('3N1AB8CV5PY123456')).not.toBeInTheDocument()
   })
 
+  it('abre ya filtrada por el estatus que pide Inicio', async () => {
+    conSesion('INVENTARIO')
+    conVehiculos()
+    renderApp('/vehiculos?estatus=VENDIDO')
+
+    expect(await screen.findByText('3N1CP5CV6RL123458')).toBeInTheDocument()
+    expect(screen.queryByText('3N1AB8CV5PY123456')).not.toBeInTheDocument()
+  })
+
   it('avisa cuando ninguna unidad coincide con la búsqueda', async () => {
     conSesion('INVENTARIO')
     conVehiculos()

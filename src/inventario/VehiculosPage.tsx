@@ -1,6 +1,6 @@
 import { Ban, Car, CircleCheck, Ellipsis, Plus, Radio, ReceiptText, Search, WifiOff } from 'lucide-react'
 import { useMemo, useState, type ComponentProps } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -62,7 +62,12 @@ export function VehiculosPage() {
   const { datos, cargando, error, recargar, refrescar } = useConsulta(listarVehiculos)
   const enVivo = useEnVivo('/api/v1/vehiculos/eventos', 'vehiculos', refrescar)
   const [busqueda, setBusqueda] = useState('')
-  const [estatus, setEstatus] = useState<EstatusVehiculo | typeof TODOS>(TODOS)
+  // Inicio enlaza a la lista ya filtrada (?estatus=DISPONIBLE).
+  const [parametros] = useSearchParams()
+  const [estatus, setEstatus] = useState<EstatusVehiculo | typeof TODOS>(() => {
+    const inicial = parametros.get('estatus')
+    return ESTATUS_VEHICULO.find((valor) => valor === inicial) ?? TODOS
+  })
   const [pagina, setPagina] = useState(1)
 
   const vehiculos = useMemo(() => datos ?? [], [datos])

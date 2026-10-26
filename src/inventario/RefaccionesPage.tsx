@@ -1,6 +1,6 @@
 import { CircleAlert, Ellipsis, Package, Plus, Search, TriangleAlert } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -50,7 +50,9 @@ import { estadoExistencia, NOMBRE_EXISTENCIA, VARIANTE_EXISTENCIA } from './esta
 import { HistorialRecepciones } from './HistorialRecepciones.tsx'
 
 const POR_PAGINA = 10
-type Filtro = 'TODAS' | 'BAJO_MINIMO' | 'SIN_EXISTENCIA'
+const FILTROS = ['TODAS', 'BAJO_MINIMO', 'SIN_EXISTENCIA'] as const
+
+type Filtro = (typeof FILTROS)[number]
 
 /**
  * Refacciones (ERP-2.0): Inventario las opera; Refacciones y el Administrador
@@ -62,7 +64,12 @@ export function RefaccionesPage() {
   const puedeOperar = sesion?.rol === 'INVENTARIO'
   const { datos, cargando, error, recargar } = useConsulta(listarRefacciones)
   const [busqueda, setBusqueda] = useState('')
-  const [filtro, setFiltro] = useState<Filtro>('TODAS')
+  // Inicio enlaza a la lista ya filtrada (?filtro=BAJO_MINIMO).
+  const [parametros] = useSearchParams()
+  const [filtro, setFiltro] = useState<Filtro>(() => {
+    const inicial = parametros.get('filtro')
+    return FILTROS.find((valor) => valor === inicial) ?? 'TODAS'
+  })
   const [pagina, setPagina] = useState(1)
   const [historialDe, setHistorialDe] = useState<Refaccion | null>(null)
 
