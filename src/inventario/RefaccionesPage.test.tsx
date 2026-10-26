@@ -35,13 +35,13 @@ describe('Inventario de refacciones', () => {
     expect(within(fila('REF-004')).getByText('Sin existencia')).toBeInTheDocument()
   })
 
-  it('avisa a Refacciones cuáles llegaron a su mínimo y permite verlas', async () => {
+  it('avisa a Refacciones cuáles están bajo su mínimo y permite verlas', async () => {
     conSesion('REFACCIONES')
     conRefacciones()
     renderApp('/refacciones')
 
     expect(
-      await screen.findByText('2 refacciones llegaron a su existencia mínima'),
+      await screen.findByText('2 refacciones están bajo su mínimo'),
     ).toBeInTheDocument()
     await userEvent.setup({ delay: null }).click(screen.getByRole('button', { name: 'Ver por resurtir' }))
 
@@ -56,7 +56,7 @@ describe('Inventario de refacciones', () => {
     renderApp('/refacciones')
 
     await screen.findByText('REF-001')
-    expect(screen.queryByText(/llegó a su existencia mínima|llegaron a su existencia mínima/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/(está|están) bajo su mínimo/)).not.toBeInTheDocument()
   })
 
   it('Refacciones y el Administrador solo consultan', async () => {

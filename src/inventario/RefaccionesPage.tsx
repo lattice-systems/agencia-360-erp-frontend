@@ -144,8 +144,8 @@ export function RefaccionesPage() {
               <TriangleAlert aria-hidden="true" />
               <AlertTitle>
                 {porResurtir === 1
-                  ? '1 refacción llegó a su existencia mínima'
-                  : `${porResurtir} refacciones llegaron a su existencia mínima`}
+                  ? '1 refacción está bajo su mínimo'
+                  : `${porResurtir} refacciones están bajo su mínimo`}
               </AlertTitle>
               <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
                 Revisa cuáles hay que resurtir.

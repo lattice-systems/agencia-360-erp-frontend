@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import { Link } from 'react-router'
 import { cn } from '@/lib/utils'
 import { formatearNumero } from '@/lib/formato'
@@ -8,16 +9,20 @@ export interface Indicador {
   /** Lista ya filtrada que explica el número; sin ella, el número no es enlace. */
   ruta?: string
   detalle?: string
+  /** Falso si el número es trabajo de otro departamento: se queda en segundo plano. */
+  propio?: boolean
 }
 
 /**
  * Los números del rol en una sola franja; cada uno abre su lista filtrada
- * cuando la pantalla la tiene. Los que están en cero quedan en segundo plano.
+ * cuando la pantalla la tiene. Los que están en cero o son de otro
+ * departamento quedan en segundo plano.
  */
 export function Indicadores({ titulo, indicadores }: { titulo: string; indicadores: Indicador[] }) {
+  const idTitulo = useId()
   return (
-    <section aria-labelledby="titulo-indicadores" className="flex flex-col gap-3">
-      <h2 id="titulo-indicadores" className="text-sm font-medium text-muted-foreground">
+    <section aria-labelledby={idTitulo} className="flex flex-col gap-3">
+      <h2 id={idTitulo} className="text-sm font-medium text-muted-foreground">
         {titulo}
       </h2>
       <ul
@@ -33,7 +38,7 @@ export function Indicadores({ titulo, indicadores }: { titulo: string; indicador
               <span
                 className={cn(
                   'text-2xl font-semibold tabular-nums',
-                  indicador.valor === 0 && 'text-muted-foreground',
+                  (indicador.valor === 0 || indicador.propio === false) && 'text-muted-foreground',
                 )}
               >
                 {formatearNumero(indicador.valor)}

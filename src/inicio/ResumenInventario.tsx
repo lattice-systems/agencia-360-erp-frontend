@@ -28,7 +28,7 @@ async function cargarRefacciones(token: string): Promise<Inventario> {
   return { vehiculos: null, refacciones: await listarRefacciones(token) }
 }
 
-/** Las que llegaron a su mínimo, de la más urgente (agotada) a la menos. */
+/** Las que están bajo su mínimo, de la más urgente (agotada) a la menos. */
 function porResurtir(refacciones: Refaccion[]) {
   return refacciones
     .filter((r) => r.bajoMinimo)
@@ -77,7 +77,7 @@ export function ResumenInventario({ rol }: { rol: Rol }) {
       {pendientes.length > 0 ? (
         <Pendiente
           icono={Package}
-          titulo={`${pendientes.length} ${plural(pendientes.length, 'refacción llegó', 'refacciones llegaron')} a su mínimo`}
+          titulo={`${pendientes.length} ${plural(pendientes.length, 'refacción está', 'refacciones están')} bajo su mínimo`}
           descripcion={
             agotadas > 0
               ? `${agotadas} ya ${plural(agotadas, 'está agotada', 'están agotadas')}. ${recibe ? 'Registra su recepción cuando llegue el pedido.' : 'Avisa a Inventario para resurtir.'}`
@@ -97,8 +97,8 @@ export function ResumenInventario({ rol }: { rol: Rol }) {
         <Pendiente
           alDia
           icono={Package}
-          titulo="Todas las refacciones están arriba de su mínimo"
-          descripcion="Cuando alguna llegue a su mínimo, aparecerá aquí."
+          titulo="Ninguna refacción está bajo su mínimo"
+          descripcion="Cuando alguna quede bajo su mínimo, aparecerá aquí."
           accion={{ texto: 'Ver refacciones', ruta: '/refacciones' }}
         />
       )}

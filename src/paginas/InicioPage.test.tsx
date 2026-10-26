@@ -55,7 +55,7 @@ describe('Inicio', () => {
     conInventario()
     renderApp('/')
 
-    expect(await screen.findByText('2 refacciones llegaron a su mínimo')).toBeInTheDocument()
+    expect(await screen.findByText('2 refacciones están bajo su mínimo')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Registrar recepción' })).toHaveAttribute('href', '/recepciones')
     expect(screen.getByRole('link', { name: /Filtro de aire/ })).toHaveAttribute('href', '/recepciones?refaccion=4')
     expect(screen.queryByText('Filtro de aceite')).not.toBeInTheDocument()
@@ -68,12 +68,12 @@ describe('Inicio', () => {
     expect(unidades.getByRole('link', { name: /^Vendidas: 1/ })).toBeInTheDocument()
   })
 
-  it('le dice a Refacciones que todo está en orden si nada llegó a su mínimo', async () => {
+  it('le dice a Refacciones que todo está en orden si nada está bajo su mínimo', async () => {
     conSesion('REFACCIONES')
     servidor.use(http.get(`${API}/api/v1/refacciones`, () => HttpResponse.json([FILTRO_ACEITE])))
     renderApp('/')
 
-    expect(await screen.findByText('Todas las refacciones están arriba de su mínimo')).toBeInTheDocument()
+    expect(await screen.findByText('Ninguna refacción está bajo su mínimo')).toBeInTheDocument()
     expect(indicadores('Existencias').getByRole('link', { name: /^Registradas: 1/ })).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Unidades en inventario' })).not.toBeInTheDocument()
   })

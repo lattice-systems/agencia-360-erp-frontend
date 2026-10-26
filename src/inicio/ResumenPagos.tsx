@@ -111,6 +111,7 @@ export function ResumenPagos({ rol }: { rol: 'CAJA' | 'CONTABILIDAD' }) {
           etiqueta: NOMBRE_FILTRO[estado],
           valor: deEstado(estado).length,
           detalle: resumenDe(deEstado(estado)),
+          propio: atiende.includes(estado),
           // Las validadas ya pasaron a Facturación: Pagos no tiene esa lista.
           ruta: estado === 'VALIDADA' ? undefined : `/pagos?filtro=${estado}`,
         }))}

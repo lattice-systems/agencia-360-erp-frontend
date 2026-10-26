@@ -71,7 +71,7 @@ export function Pendiente({
           <div
             className={cn(
               'flex size-10 shrink-0 items-center justify-center rounded-xl',
-              alDia ? 'bg-success/10 text-success' : 'bg-primary text-primary-foreground',
+              alDia ? 'bg-success/10 text-success' : 'bg-primary/10 text-primary',
             )}
           >
             <MarcaIcono aria-hidden="true" className="size-5" />
