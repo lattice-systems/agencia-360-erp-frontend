@@ -27,8 +27,12 @@ describe('Menú lateral por rol (permisos del PO del 13 de octubre)', () => {
     expect(seccionesDelMenu('FACTURACION')).toEqual(['Facturación'])
   })
 
-  it('el Administrador consulta el inventario y administra usuarios', () => {
-    expect(seccionesDelMenu('ADMINISTRADOR')).toEqual(['Vehículos', 'Refacciones', 'Usuarios'])
+  it('el Administrador consulta el inventario y el expediente, y administra usuarios', () => {
+    expect(seccionesDelMenu('ADMINISTRADOR')).toEqual(['Vehículos', 'Refacciones', 'Expediente', 'Usuarios'])
+  })
+
+  it('Servicio consulta el expediente del vehículo (ERP-3.0)', () => {
+    expect(seccionesDelMenu('SERVICIO')).toEqual(['Expediente'])
   })
 
   it('marca la sección actual, también en sus subrutas', async () => {

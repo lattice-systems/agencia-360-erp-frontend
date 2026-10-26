@@ -1,7 +1,16 @@
 // Secciones del ERP y los roles que pueden entrar a cada una, según la matriz
 // de roles. Cada módulo nuevo del ERP agrega aquí su sección; con eso aparece
 // en el menú lateral y su ruta queda protegida.
-import { Banknote, Car, ClipboardList, Package, ReceiptText, UserCog, type LucideIcon } from 'lucide-react'
+import {
+  Banknote,
+  Car,
+  ClipboardList,
+  FolderSearch,
+  Package,
+  ReceiptText,
+  UserCog,
+  type LucideIcon,
+} from 'lucide-react'
 import type { Rol } from '../api/acceso.ts'
 
 /** Grupos del menú lateral, en el orden en que se muestran. */
@@ -68,6 +77,16 @@ export const SECCIONES: Seccion[] = [
     grupo: 'Operación',
     icono: ReceiptText,
     roles: ['FACTURACION'],
+  },
+  // ERP-3.0: Servicio y el Administrador consultan el expediente del vehículo
+  // del cliente; solo Servicio corrige placas y kilometraje.
+  {
+    ruta: '/expediente',
+    titulo: 'Expediente',
+    grupo: 'Operación',
+    icono: FolderSearch,
+    roles: ['SERVICIO', 'ADMINISTRADOR'],
+    subpaginas: [{ ruta: '/expediente/:id', titulo: 'Expediente del vehículo' }],
   },
   {
     ruta: '/usuarios',
