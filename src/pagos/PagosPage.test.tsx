@@ -66,6 +66,15 @@ async function filaDe(nombre: string) {
 }
 
 describe('Pagos de ventas · Caja', () => {
+  it('abre directo la venta que eligió en Inicio', async () => {
+    conSesion('CAJA')
+    conLiquidaciones()
+    renderApp('/pagos?venta=1')
+
+    const dialogo = await screen.findByRole('dialog', { name: 'Pagos de la venta' })
+    expect(dialogo).toHaveTextContent('Ana López')
+  })
+
   it('está en el menú y muestra las ventas en Pago con su total y estado', async () => {
     conSesion('CAJA')
     conLiquidaciones()

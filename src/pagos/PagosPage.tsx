@@ -1,5 +1,6 @@
 import { Ban, Banknote, Search } from 'lucide-react'
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
@@ -13,7 +14,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -24,6 +25,7 @@ import {
 } from '@/components/ui/dialog'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Label } from '@/components/ui/label'
 import {
   Table,
@@ -35,13 +37,20 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
+import { Toggle } from '@/components/ui/toggle'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { formatearFecha, formatearMoneda, hoyIso } from '@/lib/formato'
 import { cn } from '@/lib/utils'
 import { useConsulta, useMensajeDeError } from '../api/useConsulta.ts'
-import { ChipEstado } from '../componentes/ChipEstado.tsx'
+import { Badge } from '@/components/ui/badge'
 import { EncabezadoPagina } from '../componentes/EncabezadoPagina.tsx'
-import { EstadoVacio } from '../componentes/EstadoVacio.tsx'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { TablaCargando } from '../componentes/TablaCargando.tsx'
 import { textoAPrecio } from '../inventario/precio.ts'
 import { useSesion } from '../sesion/useSesion.ts'
@@ -53,7 +62,7 @@ import {
   anularPago,
   rechazarPagos,
   registrarPago,
-  TONO_ESTADO,
+  VARIANTE_ESTADO,
   validarPagos,
   type EstadoLiquidacion,
   type Liquidacion,
@@ -74,10 +83,14 @@ export function PagosPage() {
   const { sesion } = useSesion()
   const esCaja = sesion?.rol === 'CAJA'
   const { datos, cargando, error, recargar, actualizar } = useConsulta(listarLiquidaciones)
-  // Contabilidad empieza en lo que tiene pendiente.
-  const [filtro, setFiltro] = useState<EstadoLiquidacion | typeof TODOS>(esCaja ? TODOS : 'ENVIADA')
+  // Contabilidad empieza en lo que tiene pendiente. Inicio puede pedir otro
+  // filtro (?filtro=RECHAZADA) o abrir una venta (?venta=12).
+  const [parametros, setParametros] = useSearchParams()
+  const [filtro, setFiltro] = useState<EstadoLiquidacion | typeof TODOS>(
+    () => FILTROS.find((estado) => estado === parametros.get('filtro')) ?? (esCaja ? TODOS : 'ENVIADA'),
+  )
   const [busqueda, setBusqueda] = useState('')
-  const [abiertaId, setAbiertaId] = useState<number | null>(null)
+  const [abiertaId, setAbiertaId] = useState<number | null>(() => Number(parametros.get('venta')) || null)
 
   const liquidaciones = useMemo(() => datos ?? [], [datos])
   const filtradas = useMemo(() => {
@@ -96,8 +109,22 @@ export function PagosPage() {
     )
   }
 
-  function quitarDeLaLista(prospectoId: number) {
+  /** Al cerrar se quita ?venta= para que recargar no la vuelva a abrir. */
+  function cerrarVenta() {
     setAbiertaId(null)
+    if (parametros.has('venta')) {
+      setParametros(
+        (actuales) => {
+          actuales.delete('venta')
+          return actuales
+        },
+        { replace: true },
+      )
+    }
+  }
+
+  function quitarDeLaLista(prospectoId: number) {
+    cerrarVenta()
     actualizar((actuales) => (actuales ?? []).filter((l) => l.prospectoId !== prospectoId))
   }
 
@@ -125,32 +152,32 @@ export function PagosPage() {
       ) : cargando ? (
         <TablaCargando />
       ) : liquidaciones.length === 0 ? (
-        <Card>
-          <EstadoVacio
-            icono={Banknote}
-            titulo="No hay ventas en Pago"
-            descripcion="Aparecen aquí cuando el vendedor pasa un prospecto a la etapa Pago."
-          />
-        </Card>
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon"><Banknote /></EmptyMedia>
+            <EmptyTitle>No hay ventas en Pago</EmptyTitle>
+            <EmptyDescription>
+              Aparecen aquí cuando el vendedor pasa un prospecto a la etapa Pago.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="buscar-pago">Buscar prospecto</Label>
-              <div className="relative">
-                <Search
-                  aria-hidden="true"
-                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
+              <InputGroup>
+                <InputGroupAddon>
+                  <Search aria-hidden="true" />
+                </InputGroupAddon>
+                <InputGroupInput
                   id="buscar-pago"
                   type="search"
                   placeholder="Nombre del cliente"
-                  className="pl-9"
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
                 />
-              </div>
+              </InputGroup>
             </div>
             <div role="group" aria-label="Filtrar por estado" className="flex flex-wrap gap-2">
               <ChipFiltro activo={filtro === TODOS} onClick={() => setFiltro(TODOS)}>
@@ -168,13 +195,13 @@ export function PagosPage() {
           </div>
 
           {filtradas.length === 0 ? (
-            <Card>
-              <EstadoVacio
-                icono={Search}
-                titulo="Ninguna venta coincide"
-                descripcion="Prueba con otro nombre o estado."
-              />
-            </Card>
+            <Empty className="border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon"><Search /></EmptyMedia>
+                <EmptyTitle>Ninguna venta coincide</EmptyTitle>
+                <EmptyDescription>Prueba con otro nombre o estado.</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <ListaLiquidaciones
               liquidaciones={filtradas}
@@ -189,7 +216,7 @@ export function PagosPage() {
         key={abierta?.prospectoId ?? 'cerrado'}
         liquidacion={abierta}
         esCaja={esCaja}
-        onCerrar={() => setAbiertaId(null)}
+        onCerrar={cerrarVenta}
         onCambio={reemplazar}
         onValidada={(l) => {
           quitarDeLaLista(l.prospectoId)
@@ -210,20 +237,9 @@ function ChipFiltro({
   children: ReactNode
 }) {
   return (
-    <button
-      type="button"
-      aria-pressed={activo}
-      onClick={onClick}
-      className={cn(
-        'inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-xs font-medium transition-colors',
-        'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none',
-        activo
-          ? 'bg-accent text-primary ring-1 ring-primary/20'
-          : 'bg-card text-muted-foreground ring-1 ring-border hover:text-foreground',
-      )}
-    >
+    <Toggle variant="outline" size="sm" pressed={activo} onPressedChange={onClick}>
       {children}
-    </button>
+    </Toggle>
   )
 }
 
@@ -246,9 +262,9 @@ function ListaLiquidaciones({
   const movil = useIsMobile()
   if (!movil) {
     return (
-      <Card className="py-0 md:py-0">
+      <div className="overflow-hidden rounded-lg border">
         <Table aria-label="Ventas en Pago">
-          <TableHeader>
+          <TableHeader className="bg-muted">
             <TableRow>
               <TableHead>Prospecto</TableHead>
               <TableHead>Vendedor</TableHead>
@@ -268,7 +284,7 @@ function ListaLiquidaciones({
                 <TableCell className="text-right tabular-nums">{l.pagos.length}</TableCell>
                 <TableCell className="text-right tabular-nums">{formatearMoneda(l.total)}</TableCell>
                 <TableCell>
-                  <ChipEstado tono={TONO_ESTADO[l.estado]}>{NOMBRE_ESTADO[l.estado]}</ChipEstado>
+                  <Badge variant={VARIANTE_ESTADO[l.estado]}>{NOMBRE_ESTADO[l.estado]}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
@@ -284,7 +300,7 @@ function ListaLiquidaciones({
             ))}
           </TableBody>
         </Table>
-      </Card>
+      </div>
     )
   }
 
@@ -300,7 +316,7 @@ function ListaLiquidaciones({
                   {l.vendedorNombre ?? 'Vendedor sin acceso'}
                 </p>
               </div>
-              <ChipEstado tono={TONO_ESTADO[l.estado]}>{NOMBRE_ESTADO[l.estado]}</ChipEstado>
+              <Badge variant={VARIANTE_ESTADO[l.estado]}>{NOMBRE_ESTADO[l.estado]}</Badge>
             </div>
             <p className="px-4 text-lg font-semibold tabular-nums">
               {formatearMoneda(l.total)} MXN
@@ -388,9 +404,9 @@ function DialogoPagos({ liquidacion, esCaja, onCerrar, onCambio, onValidada }: P
     <Dialog open onOpenChange={(abrir) => !abrir && cerrar()}>
       <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-xl text-primary">Pagos de la venta</DialogTitle>
+          <DialogTitle>Pagos de la venta</DialogTitle>
           <DialogDescription>
-            <span className="block text-base font-semibold text-primary">
+            <span className="block font-medium text-foreground">
               {liquidacion.prospectoNombre}
             </span>
             Vendedor: {liquidacion.vendedorNombre ?? 'sin acceso'}
@@ -400,9 +416,9 @@ function DialogoPagos({ liquidacion, esCaja, onCerrar, onCambio, onValidada }: P
         <div className="flex flex-col gap-5">
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             Estado
-            <ChipEstado tono={TONO_ESTADO[liquidacion.estado]}>
+            <Badge variant={VARIANTE_ESTADO[liquidacion.estado]}>
               {NOMBRE_ESTADO[liquidacion.estado]}
-            </ChipEstado>
+            </Badge>
           </div>
 
           {liquidacion.estado === 'RECHAZADA' && liquidacion.motivoRechazo && (
@@ -559,7 +575,7 @@ function DialogoPagos({ liquidacion, esCaja, onCerrar, onCambio, onValidada }: P
 function PrecioYSaldo({ liquidacion }: { liquidacion: Liquidacion }) {
   if (liquidacion.precioTotal == null) {
     return (
-      <Alert variant="informacion" role="note">
+      <Alert role="note">
         <AlertDescription>
           Sin precio total: Contabilidad lo captura al validar los pagos.
         </AlertDescription>
@@ -568,26 +584,30 @@ function PrecioYSaldo({ liquidacion }: { liquidacion: Liquidacion }) {
   }
   const falta = liquidacion.precioTotal - liquidacion.total
   return (
-    <dl className="grid grid-cols-2 gap-3 rounded-md border px-4 py-3 text-sm sm:grid-cols-3">
-      <div>
-        <dt className="text-muted-foreground">Precio total</dt>
-        <dd className="font-semibold tabular-nums">{formatearMoneda(liquidacion.precioTotal)}</dd>
-      </div>
-      <div>
-        <dt className="text-muted-foreground">Pagado</dt>
-        <dd className="font-semibold tabular-nums">{formatearMoneda(liquidacion.total)}</dd>
-      </div>
-      <div>
-        <dt className="text-muted-foreground">{falta > 0 ? 'Falta' : 'Saldo'}</dt>
-        <dd className="font-semibold tabular-nums">
-          {falta > 0 ? (
-            formatearMoneda(falta)
-          ) : (
-            <ChipEstado tono="exito">Cubre el precio</ChipEstado>
-          )}
-        </dd>
-      </div>
-    </dl>
+    <Card size="sm">
+      <CardContent>
+        <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+          <div>
+            <dt className="text-muted-foreground">Precio total</dt>
+            <dd className="font-semibold tabular-nums">{formatearMoneda(liquidacion.precioTotal)}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Pagado</dt>
+            <dd className="font-semibold tabular-nums">{formatearMoneda(liquidacion.total)}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">{falta > 0 ? 'Falta' : 'Saldo'}</dt>
+            <dd className="font-semibold tabular-nums">
+              {falta > 0 ? (
+                formatearMoneda(falta)
+              ) : (
+                <Badge variant="success">Cubre el precio</Badge>
+              )}
+            </dd>
+          </div>
+        </dl>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -605,96 +625,100 @@ function TablaPagos({
   const [porAnular, setPorAnular] = useState<PagoRegistrado | null>(null)
   if (liquidacion.pagos.length === 0) {
     return (
-      <p className="rounded-md border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
-        Aún no hay pagos registrados.
-      </p>
+      <Empty className="border p-6">
+        <EmptyHeader>
+          <EmptyDescription>Aún no hay pagos registrados.</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     )
   }
   return (
-    <Table aria-label="Pagos registrados">
-      <TableHeader>
-        <TableRow>
-          <TableHead>Fecha</TableHead>
-          <TableHead>Referencia</TableHead>
-          <TableHead>Registró</TableHead>
-          <TableHead className="text-right">Monto (MXN)</TableHead>
-          {editable && (
-            <TableHead>
-              <span className="sr-only">Anular</span>
-            </TableHead>
-          )}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {liquidacion.pagos.map((p) => (
-          <TableRow key={p.id} className={cn(p.anulado && 'text-muted-foreground')}>
-            <TableCell className="whitespace-nowrap">{formatearFecha(p.fechaPago)}</TableCell>
-            <TableCell>
-              <span className="flex flex-wrap items-center gap-2">
-                {p.referencia ?? '—'}
-                {p.anulado && (
-                  <ChipEstado tono="neutro">
-                    Anulado{p.anuladoPorNombre ? ` por ${p.anuladoPorNombre}` : ''}
-                  </ChipEstado>
-                )}
-              </span>
-            </TableCell>
-            <TableCell>{p.registradoPorNombre ?? '—'}</TableCell>
-            <TableCell className={cn('text-right tabular-nums', p.anulado && 'line-through')}>
-              {formatearMoneda(p.monto)}
-            </TableCell>
+    <div className="overflow-hidden rounded-lg border">
+      <Table aria-label="Pagos registrados">
+        <TableHeader className="bg-muted">
+          <TableRow>
+            <TableHead>Fecha</TableHead>
+            <TableHead>Referencia</TableHead>
+            <TableHead>Registró</TableHead>
+            <TableHead className="text-right">Monto (MXN)</TableHead>
             {editable && (
-              <TableCell className="w-12 text-right">
-                {!p.anulado && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    disabled={ocupado}
-                    aria-label={`Anular el pago de ${formatearMoneda(p.monto)}`}
-                    onClick={() => setPorAnular(p)}
-                  >
-                    <Ban aria-hidden="true" />
-                  </Button>
-                )}
-              </TableCell>
+              <TableHead>
+                <span className="sr-only">Anular</span>
+              </TableHead>
             )}
           </TableRow>
-        ))}
-      </TableBody>
-      <TableFooter>
-        <TableRow>
-          <TableCell colSpan={3} className="font-semibold">
-            Total pagado
-          </TableCell>
-          <TableCell className="text-right font-semibold tabular-nums">
-            {formatearMoneda(liquidacion.total)}
-          </TableCell>
-          {editable && <TableCell />}
-        </TableRow>
-      </TableFooter>
-      <AlertDialog open={porAnular !== null} onOpenChange={(abrir) => !abrir && setPorAnular(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-primary">¿Anular este pago?</AlertDialogTitle>
-            <AlertDialogDescription>
-              El pago de {porAnular ? formatearMoneda(porAnular.monto) : ''} queda en el registro como
-              anulado y deja de contar en el total. No se puede deshacer.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (porAnular) onAnular(porAnular.id)
-                setPorAnular(null)
-              }}
-            >
-              Anular pago
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {liquidacion.pagos.map((p) => (
+            <TableRow key={p.id} className={cn(p.anulado && 'text-muted-foreground')}>
+              <TableCell className="whitespace-nowrap">{formatearFecha(p.fechaPago)}</TableCell>
+              <TableCell>
+                <span className="flex flex-wrap items-center gap-2">
+                  {p.referencia ?? '—'}
+                  {p.anulado && (
+                    <Badge variant="secondary">
+                      Anulado{p.anuladoPorNombre ? ` por ${p.anuladoPorNombre}` : ''}
+                    </Badge>
+                  )}
+                </span>
+              </TableCell>
+              <TableCell>{p.registradoPorNombre ?? '—'}</TableCell>
+              <TableCell className={cn('text-right tabular-nums', p.anulado && 'line-through')}>
+                {formatearMoneda(p.monto)}
+              </TableCell>
+              {editable && (
+                <TableCell className="w-12 text-right">
+                  {!p.anulado && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      disabled={ocupado}
+                      aria-label={`Anular el pago de ${formatearMoneda(p.monto)}`}
+                      onClick={() => setPorAnular(p)}
+                    >
+                      <Ban aria-hidden="true" />
+                    </Button>
+                  )}
+                </TableCell>
+              )}
+            </TableRow>
+          ))}
+        </TableBody>
+        <TableFooter>
+          <TableRow>
+            <TableCell colSpan={3} className="font-semibold">
+              Total pagado
+            </TableCell>
+            <TableCell className="text-right font-semibold tabular-nums">
+              {formatearMoneda(liquidacion.total)}
+            </TableCell>
+            {editable && <TableCell />}
+          </TableRow>
+        </TableFooter>
+        <AlertDialog open={porAnular !== null} onOpenChange={(abrir) => !abrir && setPorAnular(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Anular este pago?</AlertDialogTitle>
+              <AlertDialogDescription>
+                El pago de {porAnular ? formatearMoneda(porAnular.monto) : ''} queda en el registro como
+                anulado y deja de contar en el total. No se puede deshacer.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  if (porAnular) onAnular(porAnular.id)
+                  setPorAnular(null)
+                }}
+              >
+                Anular pago
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </Table>
+    </div>
   )
 }
 
@@ -738,51 +762,56 @@ function FormularioPago({
     <form
       onSubmit={registrar}
       aria-label="Registrar un pago"
-      className="flex flex-col gap-4 rounded-md border p-4"
       noValidate
     >
-      <p className="font-medium">Registrar un pago</p>
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Field data-invalid={!!errores.monto}>
-          <FieldLabel htmlFor="monto-pago">Monto (MXN)</FieldLabel>
-          <Input
-            id="monto-pago"
-            inputMode="decimal"
-            placeholder="150,000.00"
-            value={monto}
-            onChange={(e) => setMonto(e.target.value)}
-            aria-invalid={!!errores.monto || undefined}
-            aria-describedby={errores.monto ? 'monto-pago-error' : undefined}
-          />
-          <FieldError id="monto-pago-error" errors={errores.monto ? [{ message: errores.monto }] : []} />
-        </Field>
-        <Field data-invalid={!!errores.fecha}>
-          <FieldLabel htmlFor="fecha-pago">Fecha del pago</FieldLabel>
-          <Input
-            id="fecha-pago"
-            type="date"
-            max={hoyIso()}
-            value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
-            aria-invalid={!!errores.fecha || undefined}
-            aria-describedby={errores.fecha ? 'fecha-pago-error' : undefined}
-          />
-          <FieldError id="fecha-pago-error" errors={errores.fecha ? [{ message: errores.fecha }] : []} />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor="referencia-pago">Referencia (opcional)</FieldLabel>
-          <Input
-            id="referencia-pago"
-            maxLength={60}
-            placeholder="Folio o recibo"
-            value={referencia}
-            onChange={(e) => setReferencia(e.target.value)}
-          />
-        </Field>
-      </div>
-      <Button type="submit" variant="secondary" className="self-start" disabled={ocupado}>
-        Agregar pago
-      </Button>
+      <Card size="sm">
+        <CardHeader>
+          <CardTitle>Registrar un pago</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field data-invalid={!!errores.monto}>
+              <FieldLabel htmlFor="monto-pago">Monto (MXN)</FieldLabel>
+              <Input
+                id="monto-pago"
+                inputMode="decimal"
+                placeholder="150,000.00"
+                value={monto}
+                onChange={(e) => setMonto(e.target.value)}
+                aria-invalid={!!errores.monto || undefined}
+                aria-describedby={errores.monto ? 'monto-pago-error' : undefined}
+              />
+              <FieldError id="monto-pago-error" errors={errores.monto ? [{ message: errores.monto }] : []} />
+            </Field>
+            <Field data-invalid={!!errores.fecha}>
+              <FieldLabel htmlFor="fecha-pago">Fecha del pago</FieldLabel>
+              <Input
+                id="fecha-pago"
+                type="date"
+                max={hoyIso()}
+                value={fecha}
+                onChange={(e) => setFecha(e.target.value)}
+                aria-invalid={!!errores.fecha || undefined}
+                aria-describedby={errores.fecha ? 'fecha-pago-error' : undefined}
+              />
+              <FieldError id="fecha-pago-error" errors={errores.fecha ? [{ message: errores.fecha }] : []} />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="referencia-pago">Referencia (opcional)</FieldLabel>
+              <Input
+                id="referencia-pago"
+                maxLength={60}
+                placeholder="Folio o recibo"
+                value={referencia}
+                onChange={(e) => setReferencia(e.target.value)}
+              />
+            </Field>
+          </div>
+          <Button type="submit" variant="secondary" className="self-start" disabled={ocupado}>
+            Agregar pago
+          </Button>
+        </CardContent>
+      </Card>
     </form>
   )
 }

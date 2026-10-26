@@ -7,7 +7,7 @@ describe('Rutas protegidas y menú por rol', () => {
   it('manda al login a quien no ha iniciado sesión', () => {
     renderApp('/usuarios')
 
-    expect(screen.getByRole('button', { name: 'Entrar al ERP' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Entrar' })).toBeInTheDocument()
   })
 
   it('muestra Usuarios en el menú solo al Administrador', () => {
@@ -42,7 +42,7 @@ describe('Rutas protegidas y menú por rol', () => {
     await usuario.click(screen.getByRole('button', { name: 'Perfil de Persona de Prueba' }))
     await usuario.click(await screen.findByRole('menuitem', { name: 'Cerrar sesión' }))
 
-    expect(screen.getByRole('button', { name: 'Entrar al ERP' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Entrar' })).toBeInTheDocument()
     expect(sessionStorage.length).toBe(0)
   })
 

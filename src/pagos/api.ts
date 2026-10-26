@@ -1,8 +1,11 @@
 // Endpoints de ERP-1.1 en el backend (LiquidacionController): Caja registra y
 // envía los pagos de un prospecto en Pago; Contabilidad los valida o los
 // rechaza. Los campos siguen LiquidacionVista.
-import type { Tono } from '../componentes/ChipEstado.tsx'
+import type { ComponentProps } from 'react'
+import type { Badge } from '@/components/ui/badge'
 import { peticion } from '../api/cliente.ts'
+
+type Variante = ComponentProps<typeof Badge>['variant']
 
 export const ESTADOS_LIQUIDACION = ['ABIERTA', 'ENVIADA', 'RECHAZADA', 'VALIDADA'] as const
 
@@ -23,11 +26,11 @@ export const NOMBRE_FILTRO: Record<EstadoLiquidacion, string> = {
   VALIDADA: 'Validados',
 }
 
-export const TONO_ESTADO: Record<EstadoLiquidacion, Tono> = {
-  ABIERTA: 'neutro',
-  ENVIADA: 'advertencia',
-  RECHAZADA: 'peligro',
-  VALIDADA: 'exito',
+export const VARIANTE_ESTADO: Record<EstadoLiquidacion, Variante> = {
+  ABIERTA: 'secondary',
+  ENVIADA: 'warning',
+  RECHAZADA: 'destructive',
+  VALIDADA: 'success',
 }
 
 export interface PagoRegistrado {

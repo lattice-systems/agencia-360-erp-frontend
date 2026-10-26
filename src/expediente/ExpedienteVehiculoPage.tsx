@@ -13,11 +13,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { formatearFecha, formatearMoneda, formatearNumero } from '@/lib/formato'
 import { useConsulta } from '../api/useConsulta.ts'
 import { EncabezadoPagina } from '../componentes/EncabezadoPagina.tsx'
-import { EstadoVacio } from '../componentes/EstadoVacio.tsx'
 import { TablaCargando } from '../componentes/TablaCargando.tsx'
 import { useSesion } from '../sesion/useSesion.ts'
 import {
@@ -85,15 +91,19 @@ export function ExpedienteVehiculoPage() {
       </div>
 
       <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold text-primary">Servicios</h2>
+        <h2 className="text-lg font-semibold">Servicios</h2>
         {servicios.length === 0 ? (
-          <Card>
-            <EstadoVacio
-              icono={ClipboardList}
-              titulo="Aún no hay servicios"
-              descripcion="Los servicios de este vehículo aparecerán aquí, del más reciente al más antiguo."
-            />
-          </Card>
+          <Empty className="border">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <ClipboardList />
+              </EmptyMedia>
+              <EmptyTitle>Aún no hay servicios</EmptyTitle>
+              <EmptyDescription>
+                Los servicios de este vehículo aparecerán aquí, del más reciente al más antiguo.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <ListaDeServicios servicios={servicios} onVer={setViendo} />
         )}
@@ -131,7 +141,7 @@ function DatosDelVehiculo({ vehiculo }: { vehiculo: VehiculoDelExpediente }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-primary">Vehículo</CardTitle>
+        <CardTitle>Vehículo</CardTitle>
       </CardHeader>
       <CardContent>
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
@@ -155,7 +165,7 @@ function DatosDelCliente({ cliente }: { cliente: ClienteDelExpediente }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-primary">Cliente</CardTitle>
+        <CardTitle>Cliente</CardTitle>
       </CardHeader>
       <CardContent>
         <dl className="grid gap-4">
@@ -177,9 +187,9 @@ function ListaDeServicios({ servicios, onVer }: PropsServicios) {
   const movil = useIsMobile()
   if (!movil) {
     return (
-      <Card className="py-0 md:py-0">
+      <div className="overflow-hidden rounded-lg border">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted">
             <TableRow>
               <TableHead>Fecha</TableHead>
               <TableHead className="text-right">Kilometraje</TableHead>
@@ -211,7 +221,7 @@ function ListaDeServicios({ servicios, onVer }: PropsServicios) {
             ))}
           </TableBody>
         </Table>
-      </Card>
+      </div>
     )
   }
 

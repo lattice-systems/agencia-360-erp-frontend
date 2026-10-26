@@ -1,6 +1,6 @@
 import { CircleAlert, Ellipsis, Package, Plus, Search, TriangleAlert } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -31,19 +31,28 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { formatearMoneda, formatearNumero } from '@/lib/formato'
 import { deLaPagina } from '@/lib/paginacion'
 import { useConsulta } from '../api/useConsulta.ts'
-import { ChipEstado } from '../componentes/ChipEstado.tsx'
+import { Badge } from '@/components/ui/badge'
 import { EncabezadoPagina } from '../componentes/EncabezadoPagina.tsx'
-import { EstadoVacio } from '../componentes/EstadoVacio.tsx'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import { Paginacion } from '../componentes/Paginacion.tsx'
 import { TablaCargando } from '../componentes/TablaCargando.tsx'
 import { TarjetaDato } from '../componentes/TarjetaDato.tsx'
 import { useSesion } from '../sesion/useSesion.ts'
 import { listarRefacciones, type Refaccion } from './api.ts'
-import { estadoExistencia, NOMBRE_EXISTENCIA, TONO_EXISTENCIA } from './estados.ts'
+import { estadoExistencia, NOMBRE_EXISTENCIA, VARIANTE_EXISTENCIA } from './estados.ts'
 import { HistorialRecepciones } from './HistorialRecepciones.tsx'
 
 const POR_PAGINA = 10
-type Filtro = 'TODAS' | 'BAJO_MINIMO' | 'SIN_EXISTENCIA'
+const FILTROS = ['TODAS', 'BAJO_MINIMO', 'SIN_EXISTENCIA'] as const
+
+type Filtro = (typeof FILTROS)[number]
 
 /**
  * Refacciones (ERP-2.0): Inventario las opera; Refacciones y el Administrador
@@ -55,7 +64,12 @@ export function RefaccionesPage() {
   const puedeOperar = sesion?.rol === 'INVENTARIO'
   const { datos, cargando, error, recargar } = useConsulta(listarRefacciones)
   const [busqueda, setBusqueda] = useState('')
-  const [filtro, setFiltro] = useState<Filtro>('TODAS')
+  // Inicio enlaza a la lista ya filtrada (?filtro=BAJO_MINIMO).
+  const [parametros] = useSearchParams()
+  const [filtro, setFiltro] = useState<Filtro>(() => {
+    const inicial = parametros.get('filtro')
+    return FILTROS.find((valor) => valor === inicial) ?? 'TODAS'
+  })
   const [pagina, setPagina] = useState(1)
   const [historialDe, setHistorialDe] = useState<Refaccion | null>(null)
 
@@ -111,27 +125,27 @@ export function RefaccionesPage() {
       ) : cargando ? (
         <TablaCargando />
       ) : refacciones.length === 0 ? (
-        <Card>
-          <EstadoVacio
-            icono={Package}
-            titulo="Aún no hay refacciones"
-            descripcion={
-              puedeOperar
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon"><Package /></EmptyMedia>
+            <EmptyTitle>Aún no hay refacciones</EmptyTitle>
+            <EmptyDescription>
+              {puedeOperar
                 ? 'Agrega la primera refacción; después registra sus entradas en Recepciones.'
-                : 'Cuando Inventario registre refacciones, aparecerán aquí.'
-            }
-            accion={agregar}
-          />
-        </Card>
+                : 'Cuando Inventario registre refacciones, aparecerán aquí.'}
+            </EmptyDescription>
+          </EmptyHeader>
+          {agregar && <EmptyContent>{agregar}</EmptyContent>}
+        </Empty>
       ) : (
         <>
           {porResurtir > 0 && (
-            <Alert variant="advertencia">
+            <Alert variant="warning">
               <TriangleAlert aria-hidden="true" />
               <AlertTitle>
                 {porResurtir === 1
-                  ? '1 refacción llegó a su existencia mínima'
-                  : `${porResurtir} refacciones llegaron a su existencia mínima`}
+                  ? '1 refacción está bajo su mínimo'
+                  : `${porResurtir} refacciones están bajo su mínimo`}
               </AlertTitle>
               <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
                 Revisa cuáles hay que resurtir.
@@ -153,23 +167,21 @@ export function RefaccionesPage() {
           <div className="grid gap-4 md:grid-cols-[1fr_16rem]">
             <div className="flex flex-col gap-2">
               <Label htmlFor="buscar-refaccion">Buscar refacción</Label>
-              <div className="relative">
-                <Search
-                  aria-hidden="true"
-                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
+              <InputGroup>
+                <InputGroupAddon>
+                  <Search aria-hidden="true" />
+                </InputGroupAddon>
+                <InputGroupInput
                   id="buscar-refaccion"
                   type="search"
                   placeholder="Código o descripción"
-                  className="pl-9"
                   value={busqueda}
                   onChange={(e) => {
                     setBusqueda(e.target.value)
                     setPagina(1)
                   }}
                 />
-              </div>
+              </InputGroup>
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="filtro-existencia">Existencia</Label>
@@ -187,13 +199,15 @@ export function RefaccionesPage() {
           </div>
 
           {filtradas.length === 0 ? (
-            <Card>
-              <EstadoVacio
-                icono={Search}
-                titulo="Ninguna refacción coincide"
-                descripcion="Prueba con otro código, descripción o existencia."
-              />
-            </Card>
+            <Empty className="border">
+              <EmptyHeader>
+                <EmptyMedia variant="icon"><Search /></EmptyMedia>
+                <EmptyTitle>Ninguna refacción coincide</EmptyTitle>
+                <EmptyDescription>
+                  Prueba con otro código, descripción o existencia.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <>
               <ListaRefacciones
@@ -230,9 +244,9 @@ function ListaRefacciones({ refacciones, puedeOperar, onVerRecepciones }: PropsL
   if (!movil) {
     return (
       // Escritorio: tabla con importes a la derecha
-      <Card className="py-0 md:py-0">
+      <div className="overflow-hidden rounded-lg border">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted">
             <TableRow>
               <TableHead>Código</TableHead>
               <TableHead>Descripción</TableHead>
@@ -258,7 +272,7 @@ function ListaRefacciones({ refacciones, puedeOperar, onVerRecepciones }: PropsL
                   <TableCell className="text-right tabular-nums">{formatearNumero(r.existencia)}</TableCell>
                   <TableCell className="text-right tabular-nums">{formatearNumero(r.minimo)}</TableCell>
                   <TableCell>
-                    <ChipEstado tono={TONO_EXISTENCIA[estado]}>{NOMBRE_EXISTENCIA[estado]}</ChipEstado>
+                    <Badge variant={VARIANTE_EXISTENCIA[estado]}>{NOMBRE_EXISTENCIA[estado]}</Badge>
                   </TableCell>
                   <TableCell className="w-12 text-right">
                     <AccionesRefaccion
@@ -272,7 +286,7 @@ function ListaRefacciones({ refacciones, puedeOperar, onVerRecepciones }: PropsL
             })}
           </TableBody>
         </Table>
-      </Card>
+      </div>
     )
   }
 
@@ -304,7 +318,7 @@ function ListaRefacciones({ refacciones, puedeOperar, onVerRecepciones }: PropsL
                 <dd className="text-right tabular-nums">{formatearMoneda(r.precio)}</dd>
               </dl>
               <div className="px-4">
-                <ChipEstado tono={TONO_EXISTENCIA[estado]}>{NOMBRE_EXISTENCIA[estado]}</ChipEstado>
+                <Badge variant={VARIANTE_EXISTENCIA[estado]}>{NOMBRE_EXISTENCIA[estado]}</Badge>
               </div>
             </Card>
           </li>

@@ -185,7 +185,7 @@ function FormularioVehiculo({ vehiculo }: { vehiculo?: Vehiculo }) {
       >
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-primary">Datos de la unidad</CardTitle>
+            <CardTitle>Datos de la unidad</CardTitle>
             <CardDescription>Completa los datos del vehículo. Todos los campos son obligatorios.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -251,7 +251,7 @@ function FormularioVehiculo({ vehiculo }: { vehiculo?: Vehiculo }) {
         <div className="flex flex-col gap-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-primary">Antes de guardar</CardTitle>
+              <CardTitle>Antes de guardar</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4 text-sm text-muted-foreground">
               <p>
@@ -261,7 +261,7 @@ function FormularioVehiculo({ vehiculo }: { vehiculo?: Vehiculo }) {
                   : 'La unidad aparecerá en el listado al guardarse.'}
               </p>
               <p>Una unidad con daños u otro problema entra como No disponible.</p>
-              <Alert variant="informacion">
+              <Alert>
                 <Info aria-hidden="true" />
                 <AlertTitle>Moneda: MXN</AlertTitle>
                 <AlertDescription>Importe en pesos mexicanos.</AlertDescription>
