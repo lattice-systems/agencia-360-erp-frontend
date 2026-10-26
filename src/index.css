@@ -44,7 +44,7 @@
   /* Estados que shadcn no trae (Disponible, Bajo mínimo, Validada…). */
   --success: oklch(0.448 0.119 151.328);
   --success-foreground: oklch(0.982 0.018 155.826);
-  --warning: oklch(0.555 0.163 48.998);
+  --warning: oklch(0.5 0.15 48);
   --warning-foreground: oklch(0.987 0.022 95.277);
 }
 

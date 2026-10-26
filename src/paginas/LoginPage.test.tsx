@@ -39,7 +39,7 @@ describe('Inicio de sesión', () => {
 
     await llenarYEnviar('admin', 'Secreta123')
 
-    expect(await screen.findByRole('heading', { name: 'Hola, Ana Admin' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /^Buen(os días|as tardes|as noches), Ana$/ })).toBeInTheDocument()
     expect(cuerpoEnviado).toEqual({ usuario: 'admin', contrasena: 'Secreta123', aplicacion: 'ERP' })
     expect(sessionStorage.length).toBe(1)
   })

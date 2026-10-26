@@ -24,4 +24,9 @@ export function conexionAbierta(alAbrir?: (controlador: ReadableStreamDefaultCon
 
 export const servidor = setupServer(
   http.get(`${API_URL}/api/v1/vehiculos/eventos`, () => conexionAbierta()),
+  // Listas vacías por omisión para el resumen de Inicio, que piden casi todas
+  // las pruebas al entrar a "/". Las pruebas de cada pantalla las reemplazan.
+  ...['vehiculos', 'refacciones', 'liquidaciones', 'prospectos/por-facturar', 'ventas'].map((ruta) =>
+    http.get(`${API_URL}/api/v1/${ruta}`, () => HttpResponse.json([])),
+  ),
 )
