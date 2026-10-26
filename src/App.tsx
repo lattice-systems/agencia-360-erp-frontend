@@ -1,5 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router'
 import { Layout } from './componentes/Layout.tsx'
+import { ExpedientePage } from './expediente/ExpedientePage.tsx'
+import { ExpedienteVehiculoPage } from './expediente/ExpedienteVehiculoPage.tsx'
 import { RecepcionPage } from './inventario/RecepcionPage.tsx'
 import { RefaccionesPage } from './inventario/RefaccionesPage.tsx'
 import { RefaccionFormPage } from './inventario/RefaccionFormPage.tsx'
@@ -86,6 +88,22 @@ function App() {
             element={
               <RutaProtegida roles={rolesDe('/facturacion')}>
                 <FacturacionPage />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="expediente"
+            element={
+              <RutaProtegida roles={rolesDe('/expediente')}>
+                <ExpedientePage />
+              </RutaProtegida>
+            }
+          />
+          <Route
+            path="expediente/:id"
+            element={
+              <RutaProtegida roles={rolesDe('/expediente')}>
+                <ExpedienteVehiculoPage />
               </RutaProtegida>
             }
           />
