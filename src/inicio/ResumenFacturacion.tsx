@@ -1,17 +1,17 @@
 import { ReceiptText } from 'lucide-react'
 import { formatearFechaHora } from '@/lib/formato'
 import { useConsulta } from '../api/useConsulta.ts'
-import { listarProspectosPorFacturar, listarVentas, type EstatusVenta } from '../ventas/api.ts'
+import { listarFacturas, listarPorEmitir } from '../facturas/api.ts'
 import { ResumenCargando, ResumenConError } from './EstadosResumen.tsx'
 import { Indicadores } from './Indicadores.tsx'
 import { Pendiente } from './Pendiente.tsx'
 
 async function cargar(token: string) {
-  const [prospectos, ventas] = await Promise.all([listarProspectosPorFacturar(token), listarVentas(token)])
-  return { prospectos, ventas }
+  const [porEmitir, facturas] = await Promise.all([listarPorEmitir(token), listarFacturas(token)])
+  return { porEmitir, facturas }
 }
 
-/** Inicio de Facturación: las ventas que esperan su unidad y su factura. */
+/** Inicio de Facturación (ERP-1.3): las ventas que esperan su factura. */
 export function ResumenFacturacion() {
   const { datos, cargando, error, recargar } = useConsulta(cargar)
 
@@ -22,22 +22,26 @@ export function ResumenFacturacion() {
     return <ResumenCargando />
   }
 
-  const { prospectos, ventas } = datos
-  const deEstatus = (estatus: EstatusVenta) => ventas.filter((v) => v.estatus === estatus).length
+  const { porEmitir, facturas } = datos
+  const listos = porEmitir.filter((p) => !p.bloqueo).length
 
   return (
     <div className="flex flex-col gap-8">
-      {prospectos.length > 0 ? (
+      {porEmitir.length > 0 ? (
         <Pendiente
           icono={ReceiptText}
-          titulo={`Tienes ${prospectos.length} ${prospectos.length === 1 ? 'venta' : 'ventas'} por facturar`}
-          descripcion="Contabilidad ya validó sus pagos. Elige la unidad de cada una y pásala a entrega."
-          accion={{ texto: 'Ir a facturación', ruta: '/facturacion' }}
-          filas={prospectos.map((p) => ({
-            id: p.id,
-            ruta: '/facturacion',
+          titulo={`Tienes ${porEmitir.length} ${porEmitir.length === 1 ? 'venta' : 'ventas'} por facturar`}
+          descripcion="Contabilidad ya validó sus pagos. Emite su factura y elige la unidad que se vende."
+          accion={{ texto: 'Ir a facturas', ruta: '/facturas' }}
+          filas={porEmitir.map((p) => ({
+            id: p.prospectoId,
+            ruta: '/facturas',
             titulo: p.nombre,
-            detalle: [`Validada el ${formatearFechaHora(p.enFacturacionDesde)}`, p.vendedor && `Vendedor: ${p.vendedor}`]
+            detalle: [
+              p.bloqueo ?? 'Listo para facturar',
+              `Validada el ${formatearFechaHora(p.enFacturacionDesde)}`,
+              p.vendedor && `Vendedor: ${p.vendedor}`,
+            ]
               .filter(Boolean)
               .join(' · '),
             persona: true,
@@ -49,16 +53,16 @@ export function ResumenFacturacion() {
           icono={ReceiptText}
           titulo="No hay ventas por facturar"
           descripcion="Cuando Contabilidad valide los pagos de una venta, aparecerá aquí."
-          accion={{ texto: 'Ir a facturación', ruta: '/facturacion' }}
+          accion={{ texto: 'Ir a facturas', ruta: '/facturas' }}
         />
       )}
 
       <Indicadores
-        titulo="Ventas"
+        titulo="Facturas"
         indicadores={[
-          { etiqueta: 'Por facturar', valor: prospectos.length, ruta: '/facturacion' },
-          { etiqueta: 'Por entregar', valor: deEstatus('POR_ENTREGAR') },
-          { etiqueta: 'Registradas', valor: deEstatus('REGISTRADA') },
+          { etiqueta: 'Por facturar', valor: porEmitir.length, ruta: '/facturas' },
+          { etiqueta: 'Listas para emitir', valor: listos, ruta: '/facturas' },
+          { etiqueta: 'Emitidas', valor: facturas.length, ruta: '/facturas' },
         ]}
       />
     </div>
