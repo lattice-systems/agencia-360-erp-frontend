@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router'
 import { Layout } from './componentes/Layout.tsx'
 import { ExpedientePage } from './expediente/ExpedientePage.tsx'
 import { ExpedienteVehiculoPage } from './expediente/ExpedienteVehiculoPage.tsx'
+import { FacturasPage } from './facturas/FacturasPage.tsx'
 import { RecepcionPage } from './inventario/RecepcionPage.tsx'
 import { RefaccionesPage } from './inventario/RefaccionesPage.tsx'
 import { RefaccionFormPage } from './inventario/RefaccionFormPage.tsx'
@@ -14,7 +15,6 @@ import { InicioPage } from './paginas/InicioPage.tsx'
 import { LoginPage } from './paginas/LoginPage.tsx'
 import { UsuariosPage } from './paginas/UsuariosPage.tsx'
 import { SesionProvider } from './sesion/SesionProvider.tsx'
-import { FacturacionPage } from './ventas/FacturacionPage.tsx'
 
 function App() {
   return (
@@ -84,10 +84,10 @@ function App() {
             }
           />
           <Route
-            path="facturacion"
+            path="facturas"
             element={
-              <RutaProtegida roles={rolesDe('/facturacion')}>
-                <FacturacionPage />
+              <RutaProtegida roles={rolesDe('/facturas')}>
+                <FacturasPage />
               </RutaProtegida>
             }
           />

@@ -70,10 +70,10 @@ export const SECCIONES: Seccion[] = [
     icono: Banknote,
     roles: ['CAJA', 'CONTABILIDAD'],
   },
-  // ERP-1.0: sin apartado, Facturación elige la unidad que se vendió.
+  // ERP-1.3: Facturación emite la factura y, al emitirla, elige la unidad.
   {
-    ruta: '/facturacion',
-    titulo: 'Facturación',
+    ruta: '/facturas',
+    titulo: 'Facturas',
     grupo: 'Operación',
     icono: ReceiptText,
     roles: ['FACTURACION'],

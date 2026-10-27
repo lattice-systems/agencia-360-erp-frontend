@@ -20,38 +20,33 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatearMoneda } from '@/lib/formato'
 import { useConsulta, useMensajeDeError } from '../api/useConsulta.ts'
-import { listarVehiculos, type Vehiculo } from '../inventario/api.ts'
+import { listarVehiculos } from '../inventario/api.ts'
 import { useSesion } from '../sesion/useSesion.ts'
-import { elegirUnidad, type ProspectoPorFacturar, type Venta } from './api.ts'
+import { emitirFactura, type Factura, type ProspectoPorEmitir } from './api.ts'
+import { nombreDeUnidad } from './formato.ts'
 
 interface Props {
-  prospecto: ProspectoPorFacturar
-  /** Venta actual del prospecto, si ya tiene unidad. */
-  venta: Venta | undefined
+  prospecto: ProspectoPorEmitir
   onCerrar: () => void
-  onElegida: (venta: Venta) => void
-}
-
-/** Nombre de la unidad como en la factura: Tipo, versión y Modelo. */
-function nombreDeUnidad(unidad: Pick<Vehiculo, 'modelo' | 'version' | 'anio'>) {
-  return `${unidad.modelo} ${unidad.version} ${unidad.anio}`
+  onEmitida: (factura: Factura) => void
 }
 
 /**
- * Facturación elige la unidad que se vendió (ERP-1.0). Solo se ofrecen las
- * unidades Disponibles; el backend las regresa así para este rol.
+ * Emite la factura de un prospecto (ERP-1.3): Facturación elige la unidad
+ * Disponible que se vende y, al emitir, la unidad pasa a Vendido. Solo se
+ * ofrecen las unidades Disponibles; el backend las regresa así para este rol.
  */
-export function DialogoElegirUnidad({ prospecto, venta, onCerrar, onElegida }: Props) {
+export function DialogoEmitirFactura({ prospecto, onCerrar, onEmitida }: Props) {
   const { sesion } = useSesion()
   const mensajeDeError = useMensajeDeError()
-  const { datos: unidades, cargando, error } = useConsulta(listarVehiculos)
+  const { datos: unidades, cargando, error, recargar } = useConsulta(listarVehiculos)
   const [vehiculoId, setVehiculoId] = useState('')
   const [falta, setFalta] = useState(false)
   const [errorApi, setErrorApi] = useState<string | null>(null)
   const [guardando, setGuardando] = useState(false)
-  const cambio = venta?.vin != null
+  const receptor = prospecto.receptor
 
-  async function guardar() {
+  async function emitir() {
     if (!vehiculoId) {
       setFalta(true)
       return
@@ -59,9 +54,12 @@ export function DialogoElegirUnidad({ prospecto, venta, onCerrar, onElegida }: P
     setGuardando(true)
     setErrorApi(null)
     try {
-      onElegida(await elegirUnidad(sesion?.token ?? '', prospecto.id, Number(vehiculoId)))
+      onEmitida(await emitirFactura(sesion?.token ?? '', prospecto.prospectoId, Number(vehiculoId)))
     } catch (e) {
       setErrorApi(mensajeDeError(e))
+      // Si otra factura se llevó la unidad, la lista ya no la debe ofrecer.
+      setVehiculoId('')
+      recargar()
     } finally {
       setGuardando(false)
     }
@@ -71,21 +69,37 @@ export function DialogoElegirUnidad({ prospecto, venta, onCerrar, onElegida }: P
     <Dialog open onOpenChange={(abierto) => !abierto && onCerrar()}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>
-            {cambio ? `Cambiar la unidad de ${prospecto.nombre}` : `Elegir unidad para ${prospecto.nombre}`}
-          </DialogTitle>
+          <DialogTitle>Emitir la factura de {prospecto.nombre}</DialogTitle>
           <DialogDescription>
-            La unidad que elijas pasa a Vendido.
-            {cambio && ` La unidad ${venta.vin} regresará a Disponible.`}
+            Elige la unidad que se vende. Al emitir, la unidad pasa a Vendido y el prospecto pasa a
+            Entrega.
           </DialogDescription>
         </DialogHeader>
 
         {errorApi && (
           <Alert variant="destructive">
-            <AlertTitle>No se pudo elegir la unidad</AlertTitle>
+            <AlertTitle>No se pudo emitir la factura</AlertTitle>
             <AlertDescription>{errorApi}</AlertDescription>
           </Alert>
         )}
+
+        <dl className="grid gap-x-4 gap-y-2 rounded-lg bg-muted p-4 text-sm sm:grid-cols-[auto_1fr]">
+          <dt className="text-muted-foreground">Receptor</dt>
+          <dd className="min-w-0 font-medium break-words">{receptor?.nombreCompleto}</dd>
+          <dt className="text-muted-foreground">RFC</dt>
+          <dd className="font-mono">{receptor?.rfc}</dd>
+          <dt className="text-muted-foreground">Domicilio fiscal</dt>
+          <dd className="min-w-0 break-words">{receptor?.domicilioFiscal}</dd>
+          <dt className="text-muted-foreground">Régimen fiscal</dt>
+          <dd className="min-w-0 break-words">
+            {receptor?.regimenFiscal}
+            {receptor?.regimenFiscalDescripcion && ` - ${receptor.regimenFiscalDescripcion}`}
+          </dd>
+          <dt className="text-muted-foreground">Total (IVA incluido)</dt>
+          <dd className="font-semibold tabular-nums">
+            {prospecto.total != null ? formatearMoneda(prospecto.total) : '—'}
+          </dd>
+        </dl>
 
         {error ? (
           <Alert variant="destructive">
@@ -119,12 +133,15 @@ export function DialogoElegirUnidad({ prospecto, venta, onCerrar, onElegida }: P
               <SelectContent>
                 {unidades.map((unidad) => (
                   <SelectItem key={unidad.id} value={String(unidad.id)}>
-                    {nombreDeUnidad(unidad)} · {unidad.vin} · {formatearMoneda(unidad.precio)}
+                    {nombreDeUnidad(unidad)} · {unidad.color} · {unidad.vin}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <FieldError id="unidad-error" errors={falta ? [{ message: 'Elige la unidad que se vendió.' }] : []} />
+            <FieldError
+              id="unidad-error"
+              errors={falta ? [{ message: 'Elige la unidad que se vende.' }] : []}
+            />
           </Field>
         )}
 
@@ -132,8 +149,8 @@ export function DialogoElegirUnidad({ prospecto, venta, onCerrar, onElegida }: P
           <Button type="button" variant="outline" onClick={onCerrar}>
             Cancelar
           </Button>
-          <Button type="button" onClick={guardar} disabled={guardando || unidades?.length === 0}>
-            {guardando ? 'Guardando…' : 'Elegir unidad'}
+          <Button type="button" onClick={emitir} disabled={guardando || unidades?.length === 0}>
+            {guardando ? 'Emitiendo…' : 'Emitir factura'}
           </Button>
         </DialogFooter>
       </DialogContent>
