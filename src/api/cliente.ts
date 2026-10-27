@@ -54,6 +54,26 @@ export async function peticion<T>(
   return (await respuesta.json()) as T
 }
 
+/**
+ * Descarga un archivo de la API (por ejemplo, el PDF de una factura). Los
+ * errores llegan igual que en peticion().
+ */
+export async function descargar(ruta: string, token: string): Promise<Blob> {
+  let respuesta: Response
+  try {
+    respuesta = await fetch(`${API_URL}${ruta}`, {
+      headers: { Accept: 'application/pdf, application/json', Authorization: `Bearer ${token}` },
+    })
+  } catch {
+    throw new ErrorApi(0, MENSAJE_SIN_CONEXION)
+  }
+
+  if (!respuesta.ok) {
+    throw new ErrorApi(respuesta.status, await leerMensaje(respuesta))
+  }
+  return respuesta.blob()
+}
+
 async function leerMensaje(respuesta: Response): Promise<string> {
   try {
     const cuerpo = (await respuesta.json()) as { message?: unknown }

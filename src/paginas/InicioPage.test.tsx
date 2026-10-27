@@ -132,7 +132,7 @@ describe('Inicio', () => {
   it('avisa sin detalles técnicos si no se pudo cargar el resumen', async () => {
     conSesion('FACTURACION')
     servidor.use(
-      http.get(`${API}/api/v1/ventas`, () => HttpResponse.json({ message: 'Falla del servidor' }, { status: 500 })),
+      http.get(`${API}/api/v1/facturas`, () => HttpResponse.json({ message: 'Falla del servidor' }, { status: 500 })),
     )
     renderApp('/')
 
